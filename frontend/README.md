@@ -1,35 +1,16 @@
-# 🏫 Campus Market ITL
+# React + Vite
 
-Proyecto universitario para **compra y venta de artículos entre estudiantes** del Instituto Tecnológico de León.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
----
+Currently, two official plugins are available:
 
-## ⚙️ Configuración rápida
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-### 1️⃣ Clonar el repositorio
-```bash
-git clone https://github.com/tuusuario/campusmarket-itl.git
-cd campusmarket-itl
+## React Compiler
 
-#crear un .env donde estan las variables par ala conexion de la bd y agregarle lo siguiente 
-# ⚙️ Servidor Express
-PORT=3000
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-# 🗄️ Base de datos Clever Cloud
-DB_HOST=bhwtroyehlzdichwfbld-mysql.services.clever-cloud.com
-DB_NAME=bhwtroyehlzdichwfbld
-DB_USER=u1dtxwgtcxs7hkrl
-DB_PASSWORD=qm6A9qITSB5smoybdW1Y
-DB_PORT=3306
+## Expanding the ESLint configuration
 
-
-## Instalar las dependencias para el backend
-# Para comprobar la conexion a la bd de clever cloud mysql 
-cd backend 
-npm install 
-npm server.js 
-
-# Intalar dependencias front end 
-cd frontend
-npm install
-npm run dev # correr el front
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
