@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TECSHOP</title>
+  <link rel="stylesheet" href="index.css" />
+</head>
+
+<body class="sin-aside">
+  <header class="encabezado">
+    <div class="contenedor barra-superior">
+      <form class="buscador" action="#" role="search">
+        <div class="selector-categorias" id="selectorCategorias">
+          <button
+            type="button"
+            class="btn-categorias"
+            id="btnCategorias"
+            aria-expanded="false"
+            aria-haspopup="true"
+          >
+            <span>Categorías</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M7 10l5 5 5-5z"/>
+            </svg>
+          </button>
+
+          <div class="menu-categorias" id="menuCategorias" aria-hidden="true">
+            <a class="menu-enlace" href="categorias.html?c=computadoras">💻 Computadoras</a>
+            <a class="menu-enlace" href="categorias.html?c=celulares">📱 Celulares</a>
+            <a class="menu-enlace" href="categorias.html?c=audio-video">🎧 Audio y Video</a>
+            <a class="menu-enlace" href="categorias.html?c=componentes">🧩 Componentes</a>
+            <a class="menu-enlace" href="categorias.html?c=accesorios">🔌 Accesorios</a>
+          </div>
+        </div>
+
+        <input class="input-buscar" type="search" placeholder="Buscar en TECSHOP" aria-label="Buscar" />
+        <button class="btn-buscar" type="submit" aria-label="Buscar">🔎</button>
+      </form>
+
+      <!-- cuenta -->
+      <div class="cuenta" id="cuenta">
+        <button
+          class="btn-usuario"
+          id="btnCuenta"
+          type="button"
+          aria-label="Mi cuenta"
+          aria-haspopup="true"
+          aria-expanded="false"
+        >👤</button>
+
+        <div class="menu-cuenta" id="menuCuenta" aria-hidden="true">
+          <a class="menu-enlace" href="agregar.html">➕ Agregar</a>
+          <a class="menu-enlace" href="chat.html">💬 Chat</a>
+          <a class="menu-enlace" href="resenas.html">⭐ Reseñas</a>
+          <a class="menu-enlace" href="login.html">🔑 Login</a>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- CONTENIDO -->
+  <div class="contenedor estructura">
+    <main>
+      <section id="modulo-inicio" class="modulo-inicio">
+        <div class="titulo-de-seccion">
+          <h2>Inicio / Catálogo</h2>
+          
+        </div>
+
+        <div class="caja tam-mediana">Banner</div>
+
+        <div class="rejilla-3">
+          <div class="caja tam-grande marco-x">Producto</div>
+          <div class="caja tam-grande marco-x">Producto</div>
+          <div class="caja tam-grande marco-x">Producto</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- JS: Dropdown Categorías + Dropdown Cuenta -->
+  <script>
+    // ===== Categorías =====
+    const btnCategorias = document.getElementById("btnCategorias");
+    const selectorCategorias = document.getElementById("selectorCategorias");
+    const menuCategorias = document.getElementById("menuCategorias");
+
+    // ===== Cuenta =====
+    const btnCuenta = document.getElementById("btnCuenta");
+    const cuenta = document.getElementById("cuenta");
+    const menuCuenta = document.getElementById("menuCuenta");
+
+    function abrirCategorias() {
+      selectorCategorias.classList.add("open");
+      btnCategorias.setAttribute("aria-expanded", "true");
+      menuCategorias.setAttribute("aria-hidden", "false");
+    }
+
+    function cerrarCategorias() {
+      selectorCategorias.classList.remove("open");
+      btnCategorias.setAttribute("aria-expanded", "false");
+      menuCategorias.setAttribute("aria-hidden", "true");
+    }
+
+    function abrirCuenta() {
+      cuenta.classList.add("open");
+      btnCuenta.setAttribute("aria-expanded", "true");
+      menuCuenta.setAttribute("aria-hidden", "false");
+    }
+
+    function cerrarCuenta() {
+      cuenta.classList.remove("open");
+      btnCuenta.setAttribute("aria-expanded", "false");
+      menuCuenta.setAttribute("aria-hidden", "true");
+    }
+
+    // Toggle Categorías
+    btnCategorias.addEventListener("click", (e) => {
+      e.stopPropagation();
+      cerrarCuenta();
+
+      const abierto = selectorCategorias.classList.contains("open");
+      if (abierto) cerrarCategorias();
+      else abrirCategorias();
+    });
+
+    // Toggle Cuenta
+    btnCuenta.addEventListener("click", (e) => {
+      e.stopPropagation();
+      // opcional: si abres cuenta, cierra categorías
+      cerrarCategorias();
+
+      const abierto = cuenta.classList.contains("open");
+      if (abierto) cerrarCuenta();
+      else abrirCuenta();
+    });
+
+    // Click fuera cierra ambos
+    document.addEventListener("click", (e) => {
+      if (!selectorCategorias.contains(e.target)) cerrarCategorias();
+      if (!cuenta.contains(e.target)) cerrarCuenta();
+    });
+
+    //  cierra ambos
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        cerrarCategorias();
+        cerrarCuenta();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<link rel="stylesheet" href="agregar.css" />
+<div class="form-container">
+  <h2>Agregar Producto</h2>
+<form action="#">
+  <input type="text" placeholder="Nombre" required />
+  <input type="text" placeholder="Descripción" required />
+  <input type="text" placeholder="Precio" required inputmode="decimal" />
+
+  <select id="categoria" name="categoria" required>
+    <option value="" disabled selected hidden>Categoría</option>
+    <option value="tecnologia">Tecnología y Electrónica</option>
+    <option value="materialA">Libros/Material Académico</option>
+    <option value="ropa">Ropa y Calzado</option>
+    <option value="accesorios">Accesorios y Moda</option>
+    <option value="belleza">Belleza y Cuidado Personal</option>
+    <option value="hogar">Hogar y Dormitorio</option>
+    <option value="deportes">Deportes</option>
+    <option value="arte">Arte y Creatividad</option>
+    <option value="transporte">Transporte y Movilidad</option>
+    <option value="otros">Otros</option>
+  </select>
+
+<input id="foto" type="file" accept="image/*" hidden />
+<label for="foto" class="btn-foto">
+  <img src="galeria.jpg" alt="Subir foto">
+</label>
+
+
+  <select id="estado" name="Estado" required>
+    <option value="" disabled selected hidden>Estado</option>
+    <option value="nuevo">Nuevo</option>
+    <option value="usado">Usado</option>
+  </select>
+
+  <button type="submit">Agregar</button>
+</form>
+</div>
+
+
+        
+
+    
+   
+ 

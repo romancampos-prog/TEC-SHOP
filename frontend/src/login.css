@@ -1,0 +1,200 @@
+/* ===== Reset / Base ===== */
+*{
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body{
+  /* background-color NO acepta gradientes; usa background */
+  background: linear-gradient(135deg, #c7dad4);
+  min-height: 100vh; /* mejor que height fija */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== Layout principal ===== */
+.wrapper{
+    perspective:1600px; 
+  position: relative;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  width: 800px;
+  max-width: 100%;
+  display: flex;
+  overflow: hidden;
+  
+ 
+}
+
+/* ===== Formularios ===== */
+.form-container{
+  width: 50%;
+  padding: 40px;
+  transition: all 0.3s ease;
+}
+
+.form-container h2{
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.form-container form{
+  display: flex;
+  flex-direction: column;
+}
+
+.form-container input[type="text"],
+.form-container input[type="email"],
+.form-container input[type="password"]{
+  padding: 12px 15px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  transition: border 0.3s ease;
+}
+
+.form-container input:focus{
+  border: 2px solid #0b0b0b;
+  outline: none;
+}
+/*Cuandro de adentro*/
+.form-container button.submit-btn{
+  margin-top: 15px;
+  padding: 12px;
+  border: none;
+  background: linear-gradient(to right,#67959e);
+  color: white;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.form-container button.submit-btn:hover{
+  background: linear-gradient(to left, #bceadc, #67959e);
+  
+}
+
+.form-container p{
+  margin-bottom: 20px;
+}
+
+.forgot-password{
+  color:#67959e;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  align-self: flex-start;
+  text-decoration: underline;
+}
+
+.accept-terms{
+  margin: 10px 0 0 0;
+  font-size: 0.9rem;
+  user-select: none;
+}
+
+.accept-terms input[type="checkbox"]{
+  margin-right: 8px;
+}
+
+.toggle-container{
+  width: 50%;
+  /* cuadro derecha*/
+  background: linear-gradient(to bottom right,  #bceadc, #67959e);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  text-align: center;
+  position: relative;
+}
+
+.toggle-container h2{
+  margin-bottom: 20px;
+  transition: transform 80ms ease-in;
+}
+
+.toggle-container button.switch-btn{
+  padding: 8px 25px;
+  background-color: transparent;
+  border: 2px solid #fff;
+  color: white;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  margin-top: 5px;
+}
+
+.toggle-container button.switch-btn:hover{
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.form-container.login{ display: block; }
+.form-container.signin{ display: none; }
+
+/* se oculta login y se muestra  */
+.wrapper.active .form-container.login{ display: none; }
+.wrapper.active .form-container.signin{ display: block; }
+
+
+.social-login{
+  display: flex;
+  justify-content: center;
+  margin-top: 25px;
+  gap: 15px;
+}
+
+.social-btn{
+  width: 45px;
+  height: 45px;
+  border-radius: 10px;
+  background: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.15s ease;
+}
+
+.social-btn:hover{
+  transform: translateY(-1px);
+}
+
+.social-btn svg{
+  width: 24px;
+  height: 24px;
+  transition: fill 0.3s ease;
+}
+
+
+.social-btn.google svg{ fill: #db4437; }
+.social-btn.google:hover{ background-color: #db4437; }
+.social-btn.google:hover svg{ fill: #fff; }
+
+
+.social-btn.x svg{ fill: #333; }
+.social-btn.x:hover{ background-color: #333; }
+.social-btn.x:hover svg{ fill: #fff; }
+
+
+@media screen and (max-width: 768px){
+  .wrapper{
+    flex-direction: column;
+  }
+  .form-container,
+  .toggle-container{
+    width: 100%;
+  }
+  .toggle-container{
+    padding: 20px;
+  }
+}
+
