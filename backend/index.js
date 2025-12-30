@@ -19,43 +19,6 @@ const db = mysql.createConnection({
     database: 'campus_shop'
 });
 
-// --- API USUARIOS ---
-// Registro (CREATE) - Sin el campo 'rol'
-app.post('/usuarios', async (req, res) => {
-    try {
-        const { nombre, telefono, correo, password } = req.body;
-        const saltRounds = 10;
-        const passwordHash = await bcrypt.hash(password, saltRounds);
-
-        const query = 'INSERT INTO usuarios (nombre_completo, telefono, correo_institucional, password_hash) VALUES (?, ?, ?, ?)';
-        db.query(query, [nombre, telefono, correo, passwordHash], (err, result) => {
-            if (err) return res.status(500).json({ error: err.sqlMessage });
-            res.status(201).json({ message: "Usuario creado con éxito" });
-        });
-    } catch (error) {
-        res.status(500).json({ error: "Error en el servidor" });
-    }
-});
-
-// Login (Verificación)
-app.post('/login', (req, res) => {
-    const { correo, password } = req.body;
-    const query = 'SELECT id_usuario, nombre_completo, password_hash FROM usuarios WHERE correo_institucional = ?';
-    
-    db.query(query, [correo], async (err, result) => {
-        if (err) return res.status(500).json({ error: "Error de servidor" });
-        if (result.length === 0) return res.status(404).json({ error: "Usuario no encontrado" });
-
-        const match = await bcrypt.compare(password, result[0].password_hash);
-        if (match) {
-            res.json({ 
-                usuario: { id: result[0].id_usuario, nombre: result[0].nombre_completo } 
-            });
-        } else {
-            res.status(401).json({ error: "Contraseña incorrecta" });
-        }
-    });
-});
 
 // --- CHAT LOGIC ---
 io.on('connection', (socket) => {
@@ -93,7 +56,7 @@ app.post('/usuarios', async (req, res) => {
             });
         }
         res.status(201).json({ 
-            message: "Perfil de usuario creado en AWS", 
+            message: "Perfil de usuario creado", 
             id: id_usuario 
         });
     });
