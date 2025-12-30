@@ -1,0 +1,108 @@
+/* ================= CONTENEDOR PADRE ================= */
+.contenedor-Padre {
+    position: fixed;
+    top: 0;
+    left: 0;
+    
+
+    width: 280px;
+    height: 100vh;
+
+    background: #ffffff;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.15);
+
+    display: flex;
+    flex-direction: column;
+
+    z-index: 1000;
+
+    transform: translateX(-100%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.contenedor-Padre.abierto {
+  transform: translateX(0);
+}
+
+/* ================= HEADER PERFIL ================= */
+.contenedor-perfil {
+    background: var(--fondo1);
+    color: white;
+
+    padding: 1rem;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.6rem;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+}
+
+.contenedor-perfil h2 {
+  font-size: 1.5rem;
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+}
+
+/* botón X */
+.btn-cerrar-menu {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 1.5rem;
+  font-family: "Poppins", sans-serif;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ================= USUARIO ================= */
+.contenedor-usuario {
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+/* (cuando luego pongas avatar/texto) */
+.foto-usuario {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--fondo1);
+}
+
+.avatar-usuario {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--fondo1);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: white; /* el SVG hereda esto */
+  flex-shrink: 0;
+}
+
+/* ================= OPCIONES ================= */
+.contenedor-opciones {
+  padding: 1rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: "Poppins", sans-serif;
+}
+
+/* ================= CERRAR SESIÓN ================= */
+.contenedor-cerrar {
+    padding: 1rem;
+    margin-top: auto; /* empuja al fondo */
+  
+    border-top: 1px solid #eee;
+}

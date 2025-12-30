@@ -1,14 +1,14 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Ejemplo1 from "../pages/ejmplo1";
-import Ejemplo2 from "../pages/ejemplo2";
+import Incio_page from "../pages/inicio/inicio-page";
+import Login from "../pages/login/Login";
+
 
 export default function AppRoutes() {
     return (
         <BrowserRouter>
             <Routes>
-                <Route path="/" element={<Ejemplo1></Ejemplo1>}></Route>
-                <Route path="/ejemplo1Page" element={<Ejemplo1></Ejemplo1>}></Route>
-                <Route path="/ejemplo2Page" element={<Ejemplo2></Ejemplo2>}></Route>                
+                <Route path="/" element={<Login/>}/> 
+                <Route path="/inicio" element={<Incio_page/>}/>           
             </Routes>
         </BrowserRouter>
     )

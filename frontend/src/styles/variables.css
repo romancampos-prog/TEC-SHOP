@@ -1,0 +1,4 @@
+:root {
+    /*Color fondo degradadop azul verdoso*/
+    --fondo1 : linear-gradient(135deg, #cfe7e8 0%, #86cfd4 50%, #6dc5d2 100%);
+}

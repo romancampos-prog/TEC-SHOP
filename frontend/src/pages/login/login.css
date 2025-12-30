@@ -1,0 +1,228 @@
+*{
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+html, body, #root{
+  height: 100%;
+}
+
+body{
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #c7dad4);
+}
+
+.wrapper{
+  perspective:1600px; 
+  position: relative;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  width: 800px;
+  max-width: 100%;
+  display: flex;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.form-container{
+  width: 50%;
+  padding: 40px;
+  transition: all 0.3s ease;
+  margin: 0;
+}
+
+.form-container h2{
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.form-container form{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form-container input[type="text"],
+.form-container input[type="email"],
+.form-container input[type="password"]{
+  width: 100%;
+  max-width: 360px;
+  padding: 12px 15px;
+  margin: 10px 0;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  transition: border 0.3s ease, background 0.3s ease;
+  background: #ffffff;
+}
+
+.form-container input:focus{
+  border: 2px solid #0b0b0b;
+  outline: none;
+}
+
+.form-container button.submit-btn{
+  width: 100%;
+  max-width: 360px;
+  height: 46px;
+  display: block;
+  margin: 14px auto 0 auto;
+  padding: 12px;
+  border: 0;
+  background: #6f8f97;
+  color: #ffffff;
+  font-weight: 700;
+  border-radius: 10px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.form-container button.submit-btn:hover{
+  filter: brightness(0.95);
+}
+
+.form-container button.submit-btn:active{
+  transform: translateY(1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
+
+.form-container p{
+  margin-bottom: 20px;
+}
+
+.forgot-password{
+  width: 100%;
+  max-width: 360px;
+  color:#67959e;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  align-self: center;
+  text-decoration: underline;
+}
+
+.accept-terms{
+  width: 100%;
+  max-width: 360px;
+  margin: 18px auto 0 auto;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.accept-terms input[type="checkbox"]{
+  margin: 0 10px 0 0;
+  vertical-align: middle;
+}
+
+.accept-terms *{
+  vertical-align: middle;
+}
+
+.toggle-container{
+  width: 50%;
+  background: linear-gradient(to bottom right,  #bceadc, #67959e);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  text-align: center;
+  position: relative;
+}
+
+.toggle-container h2{
+  margin-bottom: 20px;
+  transition: transform 80ms ease-in;
+}
+
+.toggle-container button.switch-btn{
+  padding: 8px 25px;
+  background-color: transparent;
+  border: 2px solid #fff;
+  color: white;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  margin-top: 5px;
+}
+
+.toggle-container button.switch-btn:hover{
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.form-container.login{ display: block; }
+.form-container.signin{ display: none; }
+
+.wrapper.active .form-container.login{ display: none; }
+.wrapper.active .form-container.signin{ display: block; }
+
+.social-login{
+  display: flex;
+  justify-content: center;
+  margin-top: 25px;
+  gap: 15px;
+}
+
+.social-btn{
+  width: 45px;
+  height: 45px;
+  border-radius: 10px;
+  background: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.15s ease;
+}
+
+.social-btn:hover{
+  transform: translateY(-1px);
+}
+
+.social-btn svg{
+  width: 24px;
+  height: 24px;
+  transition: fill 0.3s ease;
+}
+
+.errorMensaje {
+  color: rgb(160, 8, 8);
+}
+
+.social-btn.google svg{ fill: #db4437; }
+.social-btn.google:hover{ background-color: #db4437; }
+.social-btn.google:hover svg{ fill: #fff; }
+
+.social-btn.x svg{ fill: #333; }
+.social-btn.x:hover{ background-color: #333; }
+.social-btn.x:hover svg{ fill: #fff; }
+
+@media screen and (max-width: 768px){
+  .wrapper{
+    flex-direction: column;
+    margin: 0 auto;
+  }
+  .form-container,
+  .toggle-container{
+    width: 100%;
+  }
+  .toggle-container{
+    padding: 20px;
+  }
+}
+@supports selector(:has(*)){
+  .wrapper:has(.toggle-container):has(.form-container.login),
+  .wrapper:has(.toggle-container):has(.form-container.signin){
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+  }
+}

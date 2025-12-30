@@ -1,0 +1,91 @@
+body{
+  margin:0;
+  min-height:100vh;
+  background: linear-gradient(135deg, #c7dad4);
+  font-family: system-ui, Segoe UI, Roboto, Arial;
+}
+
+#root:has(.btn-foto){
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:24px;
+}
+
+#root:has(.btn-foto) .form-container{
+  width:320px;
+  padding:30px;
+  background:#fff;
+  border:1px solid #101211;
+  border-radius:12px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+  margin:0;
+  position:static;
+  left:auto;
+  top:auto;
+  transform:none;
+}
+
+#root:has(.btn-foto) form{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+#root:has(.btn-foto) .form-container input[type="text"],
+#root:has(.btn-foto) .form-container input[type="number"],
+#root:has(.btn-foto) .form-container input[type="password"],
+#root:has(.btn-foto) .form-container input[type="email"],
+#root:has(.btn-foto) .form-container select{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid #0c0c0c;
+  border-radius:10px;
+  font:inherit;
+  box-sizing:border-box;
+  background:#fff;
+  display:block;
+}
+
+#root:has(.btn-foto) .form-container select:invalid{
+  color:#0d0d0d;
+}
+
+#root:has(.btn-foto) .form-container select option{
+  color:#0f0f0f;
+}
+
+#root:has(.btn-foto) .form-container button{
+  width:220px;
+  height:44px;
+  margin:6px auto 0;
+  display:block;
+  border-radius:10px;
+  background: linear-gradient(to left, #bceadc, #67959e);
+  color:#fff;
+  border:none;
+  padding:10px 12px;
+  cursor:pointer;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+}
+
+#root:has(.btn-foto) .btn-foto{
+  width:60px;
+  height:60px;
+  margin:0 auto;
+  border:1px solid #ccc;
+  border-radius:10px;
+  background:#fff;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+}
+
+#root:has(.btn-foto) .btn-foto img{
+  width:40px;
+  height:40px;
+  object-fit:contain;
+  display:block;
+}
+
