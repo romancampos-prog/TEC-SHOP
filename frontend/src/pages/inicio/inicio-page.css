@@ -1,0 +1,14 @@
+.Contendor_cartas_productos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    background-color: white;
+}
+
+@media (max-width: 600px) {
+  .Contendor_cartas_productos {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.7rem;
+  }
+}

@@ -8,7 +8,7 @@ export default function Carta_producto ({nombre, imagen, categoria, precio}) {
                 <div className="cotendor_informacion">
                     <p>Categoria</p>
                     <h2>Nombre Producto</h2>
-                    <p>Precio $$$$$ </p>
+                    <p>$ 20 000 </p>
                 </div>
             </div>
         </>

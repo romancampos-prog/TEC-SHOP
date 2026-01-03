@@ -1,8 +1,10 @@
 import { useState } from "react";
 import "./menu_barra.css";
 import BotonMenu from "./boton-menu"
+import { useAuth } from "../../contexto/user.Context";
 
 export default function Menu_Barra ({abierto, onClose}) {
+    const {user} = useAuth();
     return (
         <>
             <div className={`contenedor-Padre ${abierto ? "abierto" : ""}`}>
@@ -22,8 +24,8 @@ export default function Menu_Barra ({abierto, onClose}) {
                         </svg>
                     </div>
                     <div className="info-Usuario">
-                        <h3>Roman</h3>
-                        <p>rcamos@gmail.com</p>
+                        <h3>{user ? user.nombre : "Sin sesión"}</h3>
+                        <p>{user ? user.email : "No hay correo"}</p>
                     </div>
                 </div>
                 <div className="contenedor-opciones">

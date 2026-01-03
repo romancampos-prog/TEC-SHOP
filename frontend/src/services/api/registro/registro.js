@@ -3,7 +3,8 @@ import { obtenerTokenFirebase } from "../../firebase/autenticacion/obtenerIdToke
 export const enviarRegistroABackend = async ({ usuario, correo }) => {
   const token = await obtenerTokenFirebase();
 
-  const response = await fetch("//https: ruta al backend", {
+  /* 🔴 BACKEND REAL (NO SE USA AÚN)
+  const response = await fetch("https://ruta-real-backend/api/usuarios", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -20,4 +21,20 @@ export const enviarRegistroABackend = async ({ usuario, correo }) => {
   }
 
   return response.json();
+  */
+
+  // 🟢 MOCK TEMPORAL (SOLO FRONTEND)
+  console.log("📦 MOCK → envío al backend:", {
+    usuario,
+    correo,
+    token,
+  });
+
+  // Simulamos respuesta exitosa del backend
+  return {
+    success: true,
+    usuario,
+    correo,
+    rol: "user",
+  };
 };

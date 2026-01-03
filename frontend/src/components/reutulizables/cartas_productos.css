@@ -1,23 +1,79 @@
+
+
 .contedor_padre_carta {
-    height: 350px;
-    display: flex;
-    flex-direction: column;
-    border-radius: 12px;
-    background-color: white;
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  background-color: white;
+  border-radius: 14px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+  overflow: hidden; /* 🔥 evita que la imagen rompa el layout */
+  display: flex;
+  flex-direction: column;
 }
+
+/* ===============================
+   IMAGEN
+   =============================== */
 
 .img_producto {
-    height: 250px;
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  display: block;
 }
+
+/* ===============================
+   INFORMACIÓN
+   =============================== */
 
 .cotendor_informacion {
-    display: flex;
-    flex-direction: column;
-    padding: 0.8rem;
-    font-family: "Poppins", sans-serif;
+  display: flex;
+  flex-direction: column;
+  padding: 0.8rem;
+  font-family: "Poppins", sans-serif;
 }
 
+.cotendor_informacion p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.cotendor_informacion h2 {
+  margin: 0.2rem 0;
+  font-size: 1.1rem;
+}
+
+/* ===============================
+   📱 AJUSTES PARA MÓVIL
+   =============================== */
+
+@media (max-width: 600px) {
+  .img_producto {
+    height: 130px; /* 🔥 CLAVE */
+  }
+
+  .cotendor_informacion {
+    padding: 0.5rem;
+  }
+
+  .cotendor_informacion h2 {
+    font-size: 0.9rem;
+  }
+
+  .cotendor_informacion p {
+    font-size: 0.75rem;
+  }
+}
+
+/* 📱📱 MÓVILES MUY PEQUEÑOS */
+@media (max-width: 360px) {
+  .img_producto {
+    height: 110px;
+  }
+
+  .cotendor_informacion h2 {
+    font-size: 0.85rem;
+  }
+}
 
 /*
 Inicio

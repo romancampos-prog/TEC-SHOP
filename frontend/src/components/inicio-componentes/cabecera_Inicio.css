@@ -1,5 +1,5 @@
 .contenedor-Padre-Cabecera {
-    background: var(--fondo1);
+    background: linear-gradient(to bottom right,  #bceadc, #67959e);
     width: 100%;
     height: auto;
     padding: 1rem 1.5rem;
@@ -73,6 +73,15 @@
 
 
 
+/* ===============================
+   OVERLAY BLOQUEA FONDO
+   =============================== */
+.overlay-menu {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 998;
+}
 
 
 
