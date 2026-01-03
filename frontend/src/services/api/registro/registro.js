@@ -3,12 +3,13 @@ import { obtenerTokenFirebase } from "../../firebase/autenticacion/obtenerIdToke
 export const enviarRegistroABackend = async ({ usuario, correo }) => {
   const token = await obtenerTokenFirebase();
 
-  /* 🔴 BACKEND REAL (NO SE USA AÚN)
-  const response = await fetch("https://ruta-real-backend/api/usuarios", {
+  console.log("🪪 TOKEN EN FRONT:", token);
+
+  const response = await fetch("http://localhost:3001/usuarios", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${token}`, // 👈 aquí va
     },
     body: JSON.stringify({
       usuario,
@@ -16,25 +17,9 @@ export const enviarRegistroABackend = async ({ usuario, correo }) => {
     }),
   });
 
-  if (!response.ok) {
-    throw new Error("No se pudo guardar el usuario en el backend");
-  }
+  const data = await response.json();
+  console.log("📥 RESPUESTA BACK:", data);
 
-  return response.json();
-  */
-
-  // 🟢 MOCK TEMPORAL (SOLO FRONTEND)
-  console.log("📦 MOCK → envío al backend:", {
-    usuario,
-    correo,
-    token,
-  });
-
-  // Simulamos respuesta exitosa del backend
-  return {
-    success: true,
-    usuario,
-    correo,
-    rol: "user",
-  };
+  return data;
 };
+

@@ -32,7 +32,7 @@ export default function Login() {
       setLoading(true);
 
       await registroUsuario({usuario, correo, contrasena, confirmContra,}); //firebase
-      //await enviarRegistroABackend({usuario, correo}); //back
+      await enviarRegistroABackend({usuario, correo}); //back
       
       setResgistroExitoso(true);
       setCorreo("");
