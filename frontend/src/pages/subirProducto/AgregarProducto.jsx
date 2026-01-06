@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import "./agregar.css";
 import { validarInformacion } from "../../services/firebase/subirProducto/subirProducto";
 import { reducirImagen } from "../../services/firebase/subirProducto/reducirImagen";
 import { subirFotoFirebase } from "../../services/firebase/fotoFirebase";
 import ProductoSubido from "./subidoCorrecto";
-import Menu_Barra from "../../components/reutulizables/menu_barra";
-import Boton_Menu from "../../components/reutulizables/menu-boton";
+import { subirProductoBackend } from "../../services/api/subirProducto/subirProducto";
+import MenuDeslizable from "../../components/reutulizables/MenuDeslizable";
+
 
 export default function AgregarProducto() {
+  const enviadoRef = useRef(false);
   const [mostrarExito, setMostrarExito] = useState(false);
 
 
@@ -45,6 +47,9 @@ export default function AgregarProducto() {
 
  const subirProductoRecat = async (e) => {
   e.preventDefault();
+  
+  if (enviadoRef.current) return;
+  enviadoRef.current = true;
 
   try {
     validarInformacion(form);
@@ -61,7 +66,7 @@ export default function AgregarProducto() {
     };
 
     console.log("producto final: ", productoFinal)
-    //await subirProductoBack(productoFinal);
+    await subirProductoBackend(productoFinal);
 
     setMostrarExito(true);
 
@@ -74,13 +79,15 @@ export default function AgregarProducto() {
   
   } catch (error) {
     alert(error.message);
+  } finally {
+    enviadoRef.current = false
   }
 };
 
 
   return (
-    <div className="add-product-page">
-      <Boton_Menu></Boton_Menu>
+    <MenuDeslizable>
+        <div className="add-product-page">
       <div className="add-product-card">
         {/* HEADER */}
         <div className="add-product-header">
@@ -152,14 +159,17 @@ export default function AgregarProducto() {
             )}
           </label>
 
-          <button className="btn-submit" type="submit">
+          <button className="btn-submit" type="submit" disabled={enviadoRef.current}>
             ✨ Publicar Producto
           </button>
         </form>
       </div>
       {mostrarExito && <ProductoSubido />}
-
+      
+      
     </div>
+    </MenuDeslizable>
+    
   );
 }
 

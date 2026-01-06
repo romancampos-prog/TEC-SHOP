@@ -10,9 +10,9 @@ export default function AppRoutes() {
             <Routes>
                 {/*<Route path="/" element={<Login/>}/>
                 <Route path="/" element={<Incio_page/>}/>*/}   
-                <Route path="/r" element={<AgregarProducto/>}/>
-                <Route path="/d" element={<Incio_page/>}/>
-                <Route path="/" element={<Login/>}/>
+                <Route path="/" element={<AgregarProducto/>}/>
+                <Route path="/r" element={<Incio_page/>}/>
+                <Route path="/e" element={<Login/>}/>
             </Routes>
         </BrowserRouter>
     )

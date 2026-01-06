@@ -1,0 +1,193 @@
+/* ===============================
+   RESET BÁSICO PARA EL LAYOUT
+   =============================== */
+* {
+  box-sizing: border-box;
+}
+
+/* ===============================
+   BOTÓN DE MENÚ (HAMBURGUESA)
+   =============================== */
+.menu-btn {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+
+  width: 42px;
+  height: 42px;
+
+  border: none;
+  border-radius: 8px;
+  background: #ffffff;
+
+  font-size: 1.4rem;
+  cursor: pointer;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  z-index: 1001;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-btn:hover {
+  background: #f2f2f2;
+}
+
+/* ===============================
+   OVERLAY (FONDO OSCURO)
+   =============================== */
+.overlay-menu {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 998;
+}
+
+/* ===============================
+   SIDEBAR / MENÚ LATERAL
+   =============================== */
+.contenedor-Padre {
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  width: 280px;
+  height: 100vh;
+
+  background: #ffffff;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+
+  z-index: 999;
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* MENÚ ABIERTO */
+.contenedor-Padre.abierto {
+  transform: translateX(0);
+}
+
+/* ===============================
+   CABECERA DEL MENÚ
+   =============================== */
+.contenedor-perfil {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.contenedor-perfil h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+/* BOTÓN CERRAR */
+.btn-cerrar-menu {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* ===============================
+   USUARIO
+   =============================== */
+.contenedor-usuario {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.avatar-usuario {
+  width: 42px;
+  height: 42px;
+
+  border-radius: 50%;
+  background: #67959e;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: white;
+}
+
+.info-Usuario h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.info-Usuario p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+/* ===============================
+   OPCIONES DEL MENÚ
+   =============================== */
+.contenedor-opciones {
+  flex: 1;
+  padding: 0.5rem;
+}
+
+/* ===============================
+   BOTONES DEL MENÚ
+   =============================== */
+.menu-opcion {
+  width: 100%;
+  padding: 0.75rem 1rem;
+
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.menu-opcion:hover {
+  background: #f2f2f2;
+}
+
+/* OPCIÓN PELIGRO */
+.menu-opcion.danger {
+  color: #c0392b;
+}
+
+.menu-opcion.danger:hover {
+  background: rgba(192, 57, 43, 0.1);
+}
+
+/* ===============================
+   FOOTER (CERRAR SESIÓN)
+   =============================== */
+.contenedor-cerrar {
+  padding: 0.75rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* ===============================
+   RESPONSIVE
+   =============================== */
+@media (max-width: 480px) {
+  .contenedor-Padre {
+    width: 85%;
+  }
+}

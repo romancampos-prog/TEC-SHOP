@@ -3,7 +3,7 @@ import { obtenerTokenFirebase } from "../../firebase/autenticacion/obtenerIdToke
 export async function subirProductoBackend(producto) {
   const token = await obtenerTokenFirebase();
 
-  const response = await fetch("https://TU_BACKEND/api/productos", {
+  const response = await fetch("http://localhost:3001/subirProducto", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -15,6 +15,8 @@ export async function subirProductoBackend(producto) {
   if (!response.ok) {
     throw new Error("No se pudo guardar el producto");
   }
+
+  console.log(response)
 
   return response.json();
 }

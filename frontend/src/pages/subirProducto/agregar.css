@@ -109,6 +109,13 @@ textarea {
   filter: brightness(0.95);
 }
 
+.overlay-menu {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 998;
+}
+
 /* DESKTOP */
 @media (min-width: 900px) {
   .add-product-card {
