@@ -172,6 +172,81 @@ app.get('/productos', async (req, res) => {
     }
 });
 
+//PUT
+app.put('/productos/:id', async (req, res) => {
+    const id_producto = req.params.id;
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: "No autorizado" });
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+
+    try {
+        // 1. Extraer UID del token de Firebase
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const id_usuario_token = decodedToken.uid;
+
+        // 2. Extraer datos a actualizar del body
+        const { id_categoria, nombre, descripcion, precio, imagen_url, estado } = req.body;
+
+        // 3. Ejecutar Update con doble validación en el WHERE
+        // Solo actualizará si el id_producto existe Y el id_vendedor coincide con el token
+        const query = `
+            UPDATE productos 
+            SET id_categoria = ?, nombre = ?, descripcion = ?, precio = ?, imagen_url = ?, estado = ?
+            WHERE id_producto = ? AND id_vendedor = ?
+        `;
+
+        db.query(query, [id_categoria, nombre, descripcion, precio, imagen_url, estado, id_producto, id_usuario_token], (err, result) => {
+            if (err) return res.status(500).json({ error: err.sqlMessage });
+
+            // result.affectedRows será 0 si el producto no existe o si el usuario no es el dueño
+            if (result.affectedRows === 0) {
+                return res.status(403).json({ error: "No tienes permiso para editar este producto o no existe." });
+            }
+
+            res.json({ message: "Producto actualizado correctamente" });
+        });
+
+    } catch (error) {
+        res.status(403).json({ error: "Token inválido" });
+    }
+});
+
+//DELETE
+app.delete('/productos/:id', async (req, res) => {
+    const id_producto = req.params.id;
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: "No autorizado" });
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+
+    try {
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const id_usuario_token = decodedToken.uid;
+
+        // Eliminar con validación de dueño
+        const query = 'DELETE FROM productos WHERE id_producto = ? AND id_vendedor = ?';
+
+        db.query(query, [id_producto, id_usuario_token], (err, result) => {
+            if (err) return res.status(500).json({ error: err.sqlMessage });
+
+            if (result.affectedRows === 0) {
+                return res.status(403).json({ error: "No puedes eliminar un producto que no te pertenece." });
+            }
+
+            res.json({ message: "Producto eliminado exitosamente" });
+        });
+
+    } catch (error) {
+        res.status(403).json({ error: "Token inválido" });
+    }
+});
 
 
 // ✅ Arranque simple
