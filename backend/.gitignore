@@ -1,0 +1,7 @@
+# Ignorar la carpeta frontend por completo
+frontend/
+
+# Ignorar archivos de credenciales específicos (por seguridad)
+backend/serviceAccountKey.json
+node_modules/
+.env
