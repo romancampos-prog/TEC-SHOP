@@ -18,7 +18,8 @@ admin.initializeApp({
 });
 
 
-
+const rutasBusqueda = require('./src/routes/busquedas'); 
+app.use('/busquedas', rutasBusqueda);
 
 
 const db = mysql.createConnection({
