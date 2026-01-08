@@ -1,21 +1,20 @@
 import "./login.css";
 import { useRef, useState } from "react";
 import { registroUsuario, loginUsuario } from "../../services/firebase/autenticacion/autenticacionUsuario";
-import RegistroCompletado from "../../components/login-componente/registroCompletado"
+import RegistroCompletado from "../../components/login-componente/registroCompletado";
 import { enviarRegistroABackend } from "../../services/api/registro/registro";
 import { mapearErrorFirebase } from "../../services/firebase/autenticacion/errores.firebase";
 import { useNavigate } from "react-router-dom";
 
-
 export default function Login() {
-  //para cambair de pagina 
+  // para cambiar de pagina
   const navigate = useNavigate();
 
-  //variables para la animacion 
+  // variables para la animacion
   const [active, setActive] = useState(false);
   const wrapperRef = useRef(null);
 
-  //variables para login 
+  // variables para login
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [confirmContra, setConfirmContra] = useState("");
@@ -31,16 +30,14 @@ export default function Login() {
     try {
       setLoading(true);
 
-      await registroUsuario({usuario, correo, contrasena, confirmContra,}); //firebase
-      await enviarRegistroABackend({usuario, correo}); //back
-      
+      await registroUsuario({ usuario, correo, contrasena, confirmContra }); // firebase
+      await enviarRegistroABackend({ usuario, correo }); // back
+
       setResgistroExitoso(true);
       setCorreo("");
       setConfirmContra("");
       setContrasena("");
       setUsuario("");
-      
-      // aquí luego puedes limpiar o redirigir
     } catch (error) {
       setErrorMsj(mapearErrorFirebase(error));
     } finally {
@@ -48,23 +45,20 @@ export default function Login() {
     }
   };
 
-
   const LoginRect = async (e) => {
     e.preventDefault();
-    setErrorMsj("")
+    setErrorMsj("");
 
     try {
-      await loginUsuario({correo, contrasena});
-      console.log("login correcto")
-      navigate("/inicio")
+      await loginUsuario({ correo, contrasena });
+      console.log("login correcto");
+      navigate("/inicio");
     } catch (error) {
-      setErrorMsj(mapearErrorFirebase(error))
+      setErrorMsj(mapearErrorFirebase(error));
     }
-  }
+  };
 
-  
-
-  //animacion de cambio entre registro y login 
+  // animacion de cambio entre registro y login
   function toggleActive() {
     setActive((v) => !v);
 
@@ -80,22 +74,57 @@ export default function Login() {
     });
   }
 
+  
+  const irRecuperar = () => {
+    navigate("/recuperaC");
+  };
+
+
+  const onForgotKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      irRecuperar();
+    }
+  };
+
   return (
     <div
       className={`wrapper ${active ? "active" : ""}`}
       id="formWrapper"
       ref={wrapperRef}
     >
-   
       <div className="form-container login">
         <h2>Iniciar Sesión</h2>
+
         <form onSubmit={LoginRect}>
-          <input type="email" placeholder="Email"         value={correo} onChange={(e) => setCorreo(e.target.value)}  required />
-          <input type="password" placeholder="Contraseña" value={contrasena} onChange={(e) => setContrasena(e.target.value)} required />
+          <input
+            type="email"
+            placeholder="Email"
+            value={correo}
+            onChange={(e) => setCorreo(e.target.value)}
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Contraseña"
+            value={contrasena}
+            onChange={(e) => setContrasena(e.target.value)}
+            required
+          />
+
           {errorMsj && <p className="errorMensaje">{errorMsj}</p>}
-          <div className="forgot-password" tabIndex={0}>
+
+          <div
+            className="forgot-password"
+            role="button"
+            tabIndex={0}
+            onClick={irRecuperar}
+            onKeyDown={onForgotKeyDown}
+          >
             ¿Olvidaste la contraseña?
           </div>
+
           <button type="submit" className="submit-btn">
             Login
           </button>
@@ -106,7 +135,12 @@ export default function Login() {
       <div className="toggle-container">
         <h2>¿Eres nuevo aquí?</h2>
         <p>Compra y vende en un solo clic.</p>
-        <button type="button" className="switch-btn" id="registerSwitch" onClick={toggleActive}>
+        <button
+          type="button"
+          className="switch-btn"
+          id="registerSwitch"
+          onClick={toggleActive}
+        >
           Registrarse
         </button>
       </div>
@@ -114,16 +148,57 @@ export default function Login() {
       {/* registro */}
       <div className="form-container signin">
         <h2>Crear Cuenta</h2>
+
         <form onSubmit={RegistroReact}>
-          <input type="text" placeholder="Usuario"                   value={usuario}       onChange={(e) => setUsuario(e.target.value)} required />
-          <input type="email" placeholder="Email" autoComplete="off" value={correo}        onChange={(e) => setCorreo(e.target.value)} required />
-          <input type="password" placeholder="Contraseña"            value={contrasena}    onChange={(e) => setContrasena(e.target.value)} required />
-          <input type="password" placeholder="Confirmar contraseña"  value={confirmContra} onChange={(e) => setConfirmContra(e.target.value)} required />
+          <input
+            type="text"
+            placeholder="Usuario"
+            value={usuario}
+            onChange={(e) => setUsuario(e.target.value)}
+            required
+          />
+
+          <input
+            type="email"
+            placeholder="Email"
+            autoComplete="off"
+            value={correo}
+            onChange={(e) => setCorreo(e.target.value)}
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Contraseña"
+            value={contrasena}
+            onChange={(e) => setContrasena(e.target.value)}
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Confirmar contraseña"
+            value={confirmContra}
+            onChange={(e) => setConfirmContra(e.target.value)}
+            required
+          />
+
           {errorMsj && <p className="errorMensaje">{errorMsj}</p>}
-          <button type="submit" className="submit-btn"> {loading ? "Registrando..." : "Registrarme"} </button>
+
+          <button type="submit" className="submit-btn">
+            {loading ? "Registrando..." : "Registrarme"}
+          </button>
         </form>
       </div>
-      {registroExitoso && (<RegistroCompletado onContinuar={() => {setResgistroExitoso(false); setActive(false);}}/>)}
+
+      {registroExitoso && (
+        <RegistroCompletado
+          onContinuar={() => {
+            setResgistroExitoso(false);
+            setActive(false);
+          }}
+        />
+      )}
     </div>
   );
 }
