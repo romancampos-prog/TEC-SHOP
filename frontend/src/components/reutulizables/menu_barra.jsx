@@ -2,8 +2,11 @@ import { useState } from "react";
 import "./menu_barra.css";
 import BotonMenu from "./boton-menu"
 import { useAuth } from "../../contexto/user.Context";
+import { useNavigate } from "react-router-dom";
+
 
 export default function Menu_Barra ({abierto, onClose}) {
+    const navigate = useNavigate(); 
     const {user} = useAuth();
     return (
         <>
@@ -48,7 +51,11 @@ export default function Menu_Barra ({abierto, onClose}) {
                     />
                     
                     <BotonMenu text = "Subir Producto"
-                        icon={
+                        onClick={() => {
+                                navigate("/subirProducto");
+                                onClose(); // opcional: cerrar el menú
+                            }}
+                            icon={
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <path d="M12 16V4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                             <path d="M7 9l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
