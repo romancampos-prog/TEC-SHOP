@@ -8,7 +8,7 @@ export default function Detalle() {
   const [cantidad, setCantidad] = useState(1);
   const navigate = useNavigate();
 
-  // ✅ si disponible > 1, se muestra el selector de cantidad
+
   const producto = useMemo(
     () => ({
       nombre: "Xbox Series X 1TB",
@@ -19,7 +19,7 @@ export default function Detalle() {
       precio: 12999,
       fotoUrl: xboxImg,
 
-      // ✅ AGREGA ESTO: stock/cantidad disponible
+
       stock: 5, // <-- si es 1 o 0, NO se muestra selector
     }),
     []
@@ -67,7 +67,6 @@ export default function Detalle() {
     .replace("MXN", "")
     .trim();
 
-  // ✅ límite máximo = stock (si no hay, 1)
   const maxCantidad = Math.max(1, Number(producto.stock || 1));
 
   // si el stock baja, ajusta la cantidad para no pasarse
@@ -134,7 +133,7 @@ export default function Detalle() {
 
             {/* ===== Bottom ===== */}
             <div className="pd-bottom">
-              {/* ✅ SOLO SI HAY MÁS DE 1 */}
+            
               {maxCantidad > 1 && (
                 <div className="pd-qtyRow">
                   <span className="pd-qtyLabel">Cantidad:</span>
@@ -161,7 +160,7 @@ export default function Detalle() {
                 </div>
               )}
 
-              {/* ✅ Quitamos Carrito y Compartir */}
+           
               <div className="pd-actionsRow pd-actionsRow--solo">
                 <button className="pd-iconBtn" type="button" aria-label="Favorito">
                   <svg viewBox="0 0 24 24" width="18" height="18">
