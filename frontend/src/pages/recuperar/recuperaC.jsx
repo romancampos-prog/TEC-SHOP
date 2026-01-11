@@ -1,6 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { recuperarContrasenaFirebase } from "../../services/firebase/recuperarContraseña/recuperarContraseñaFire";
 import "../recuperar/recuperaC.css";
+import { validarCorreo } from "../../services/firebase/validarCampos/validarCampo";
 
 export default function RecuperaC() {
   const navigate = useNavigate();
@@ -33,11 +35,18 @@ export default function RecuperaC() {
     const cleanEmail = email.trim();
     if (!cleanEmail) return;
 
+    const errorCorreo = validarCorreo(cleanEmail);
+    if (errorCorreo) {
+      setModalMsg(errorCorreo);
+      setModalOpen(true);
+      return
+    }
+
     try {
       setSending(true);
 
-      // Aquí Firebase 
-     
+      await recuperarContrasenaFirebase(cleanEmail);
+      
 
       console.log("Recuperar contraseña para:", cleanEmail);
 
@@ -156,7 +165,7 @@ export default function RecuperaC() {
               ref={okBtnRef}
               className="rc-modalBtn"
               type="button"
-              onClick={() => navigate("/cambioContrasena")}
+              onClick={() => navigate("/")}
             >
               Entendido
             </button>

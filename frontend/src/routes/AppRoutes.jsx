@@ -3,26 +3,35 @@ import Incio_page from "../pages/inicio/inicio-page";
 import Login from "../pages/login/Login";
 import AgregarProducto from "../pages/subirProducto/AgregarProducto";
 import RecuperaC from "../pages/recuperar/recuperaC";
-import CambioContrasena from "../pages/cambiar/cambioContrasena"; 
-
-
-
+import RutaProtegida from "./RutaProtegida";
 
 export default function AppRoutes() {
-  
-
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/subirProducto" element={<AgregarProducto />} />
-        <Route path="/inicio" element={<Incio_page />} />
+        {/* RUTAS PÚBLICAS */}
         <Route path="/" element={<Login />} />
+        <Route path="/recuperaC" element={<RecuperaC />} />
+       
 
+        {/* RUTAS PROTEGIDAS poner aqui las demas rutas */}
+        <Route
+          path="/inicio"
+          element={
+            <RutaProtegida>
+              <Incio_page />
+            </RutaProtegida>
+          }
+        />
 
-       <Route path="/recuperaC" element={<RecuperaC />} />
-       <Route path="/cambioContrasena" element={<CambioContrasena />} />
-
-      
+        <Route
+          path="/subirProducto"
+          element={
+            <RutaProtegida>
+              <AgregarProducto />
+            </RutaProtegida>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

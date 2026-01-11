@@ -1,13 +1,24 @@
-import { useState } from "react";
 import "./menu_barra.css";
 import BotonMenu from "./boton-menu"
 import { useAuth } from "../../contexto/user.Context";
 import { useNavigate } from "react-router-dom";
-
+import { cerrarSesionFirebase } from "../../services/firebase/cerrarSesion/cerrarSesionFire";
 
 export default function Menu_Barra ({abierto, onClose}) {
     const navigate = useNavigate(); 
-    const {user} = useAuth();
+    const {user} = useAuth(); //traer infromqacion del usuario 
+    
+    const cerrarSesion = async () => {
+        try {
+            await cerrarSesionFirebase();
+            navigate("/", {replace: true})
+            console.log("sesion cerrada correctamente")
+        } catch (error) {
+            console.error("Error al cerrar sesion: ", error)
+        }
+    }
+
+
     return (
         <>
             <div className={`contenedor-Padre ${abierto ? "abierto" : ""}`}>
@@ -73,6 +84,8 @@ export default function Menu_Barra ({abierto, onClose}) {
                                 <path d="M21 3v18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                             </svg>
                         }
+
+                        onClick={cerrarSesion}
                     />
                 </div>
             </div>  
