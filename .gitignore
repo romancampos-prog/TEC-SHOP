@@ -1,2 +1,7 @@
-.firebase/
-.firebase/
+# Ignorar mi carpeta de experimentos local
+frontend/
+
+# Ignorar archivos sensibles del backend
+backend/node_modules/
+backend/serviceAccountKey.json
+backend/.env

@@ -93,6 +93,43 @@ app.post('/usuarios', async (req, res) => {
     }
 });
 
+
+app.get('/usuarios', async (req, res) => {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: "No autorizado" });
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+
+    try {
+        // 1. Extraer el UID de forma segura desde Firebase
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const id_usuario = decodedToken.uid;
+
+        // 2. Buscar solo el nombre en la base de datos
+        const query = 'SELECT nombre_completo FROM usuarios WHERE id_usuario = ?';
+        
+        db.query(query, [id_usuario], (err, results) => {
+            if (err) {
+                return res.status(500).json({ error: "Error en base de datos" });
+            }
+
+            if (results.length === 0) {
+                return res.status(404).json({ error: "Usuario no encontrado" });
+            }
+
+            // 3. Responder con el nombre
+            res.json({ nombre: results[0].nombre_completo });
+        });
+
+    } catch (error) {
+        console.error("Error de token:", error);
+        res.status(403).json({ error: "Sesión inválida" });
+    }
+});
+
 //ENDPOINT PRODUCTOS
 
 //POST
