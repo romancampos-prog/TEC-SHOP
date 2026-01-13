@@ -1,9 +1,7 @@
-/* ================= CONTENEDOR PADRE ================= */
 .contenedor-Padre {
     position: fixed;
     top: 0;
     left: 0;
-    
 
     width: 280px;
     height: 100vh;
@@ -14,17 +12,23 @@
     display: flex;
     flex-direction: column;
 
-    z-index: 1000;
-
+    
+    z-index: 999999;
     transform: translateX(-100%);
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
 }
 
 .contenedor-Padre.abierto {
   transform: translateX(0);
+  pointer-events: auto;
 }
 
-/* ================= HEADER PERFIL ================= */
+.contenedor-Padre * {
+  pointer-events: auto;
+}
+
+
 .contenedor-perfil {
     background: linear-gradient(to bottom right,  #bceadc, #67959e);
     color: white;
@@ -44,7 +48,7 @@
   font-weight: 600;
 }
 
-/* botón X */
+
 .btn-cerrar-menu {
   background: transparent;
   border: none;
@@ -67,7 +71,7 @@
   border-bottom: 1px solid #eee;
 }
 
-/* (cuando luego pongas avatar/texto) */
+
 .foto-usuario {
   width: 48px;
   height: 48px;
@@ -103,6 +107,6 @@
 .contenedor-cerrar {
     padding: 1rem;
     margin-top: auto; /* empuja al fondo */
-  
+
     border-top: 1px solid #eee;
 }

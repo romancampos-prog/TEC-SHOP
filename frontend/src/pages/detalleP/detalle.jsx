@@ -1,7 +1,8 @@
-import "../styles/detalle.css";
+import "./detalle.css";
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import xboxImg from "../styles/xbox.jpg";
+import xboxImg from "./xbox.jpg";
+
 
 export default function Detalle() {
   const [abierto, setAbierto] = useState(true);
@@ -92,7 +93,7 @@ export default function Detalle() {
             ✕
           </button>
 
-          {/* ===== Izquierda ===== */}
+          {/* Izquierda  */}
           <div className="pd-left">
             <div className="pd-foto">
               {producto.fotoUrl ? (
@@ -108,7 +109,7 @@ export default function Detalle() {
             <div className="pd-precioTag">{precioSinMXN}</div>
           </div>
 
-          {/* ===== Derecha ===== */}
+          {/*  Derecha*/}
           <div className="pd-derecha">
             <div className="pd-chip">{producto.categoria}</div>
 
@@ -131,7 +132,7 @@ export default function Detalle() {
 
             <div className="pd-hr" />
 
-            {/* ===== Bottom ===== */}
+            {/* Bottom */}
             <div className="pd-bottom">
             
               {maxCantidad > 1 && (
