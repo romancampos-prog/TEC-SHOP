@@ -6,7 +6,7 @@ import RecuperaC from "../pages/recuperar/recuperaC";
 import Incio_page from "../pages/inicio/inicio-page";
 import AgregarProducto from "../pages/subirProducto/AgregarProducto";
 
-import CambioContrasena from "../pages/cambiar/cambioContrasena";
+import CambioContrasena from "../pages/cambiar/cambioContrasena.jsx";
 import Chats from "../pages/chats/chats";
 import Chat from "../pages/chat/Chat";
 import Detalle from "../pages/detalleP/detalle";
