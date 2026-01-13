@@ -1,35 +1,80 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Incio_page from "../pages/inicio/inicio-page";
+
 import Login from "../pages/login/Login";
-import AgregarProducto from "../pages/subirProducto/AgregarProducto";
 import RecuperaC from "../pages/recuperar/recuperaC";
-import CambioContrasena from "../pages/cambiar/cambioContrasena"; 
+
+import Incio_page from "../pages/inicio/inicio-page";
+import AgregarProducto from "../pages/subirProducto/AgregarProducto";
+
+import CambioContrasena from "../pages/cambiar/cambioContrasena";
 import Chats from "../pages/chats/chats";
+import Chat from "../pages/chat/Chat";
 import Detalle from "../pages/detalleP/detalle";
-import Chat from "../pages/chat/Chat"; 
 
-
-
+import RutaProtegida from "./RutaProtegida";
 
 export default function AppRoutes() {
-  
-
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/subirProducto" element={<AgregarProducto />} />
-        <Route path="/inicio" element={<Incio_page />} />
+        {/* ===== RUTAS PÚBLICAS ===== */}
         <Route path="/" element={<Login />} />
+        <Route path="/recuperaC" element={<RecuperaC />} />
 
+        {/* ===== RUTAS PROTEGIDAS ===== */}
+        <Route
+          path="/inicio"
+          element={
+            <RutaProtegida>
+              <Incio_page />
+            </RutaProtegida>
+          }
+        />
 
-       <Route path="/recuperaC" element={<RecuperaC />} />
-       <Route path="/cambioContrasena" element={<CambioContrasena />} />
-       <Route path="/chat" element={<Chat />} />
-       <Route path="/chats" element={<Chats />} />
-       <Route path="/detalle" element={<Detalle />} />
+        <Route
+          path="/subirProducto"
+          element={
+            <RutaProtegida>
+              <AgregarProducto />
+            </RutaProtegida>
+          }
+        />
 
+        <Route
+          path="/cambioContrasena"
+          element={
+            <RutaProtegida>
+              <CambioContrasena />
+            </RutaProtegida>
+          }
+        />
 
-      
+        <Route
+          path="/chats"
+          element={
+            <RutaProtegida>
+              <Chats />
+            </RutaProtegida>
+          }
+        />
+
+        <Route
+          path="/chat"
+          element={
+            <RutaProtegida>
+              <Chat />
+            </RutaProtegida>
+          }
+        />
+
+        <Route
+          path="/detalle"
+          element={
+            <RutaProtegida>
+              <Detalle />
+            </RutaProtegida>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

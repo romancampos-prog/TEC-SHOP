@@ -1,7 +1,8 @@
 import { getAuth } from "firebase/auth";
+import { app } from "../firebase.config";
 
 export const obtenerTokenFirebase = async () => {
-  const auth = getAuth();
+  const auth = getAuth(app);
   const user = auth.currentUser;
 
   if (!user) {

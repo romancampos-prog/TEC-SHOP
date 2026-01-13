@@ -1,4 +1,10 @@
 export const mapearErrorFirebase = (error) => {
+  // 🔴 Error lanzado por tus validaciones (new Error)
+  if (!error.code && error.message) {
+    return error.message;
+  }
+
+  // 🔵 Errores reales de Firebase
   switch (error.code) {
     case "auth/user-not-found":
       return "No existe una cuenta con ese correo";
@@ -9,6 +15,9 @@ export const mapearErrorFirebase = (error) => {
     case "auth/invalid-email":
       return "El correo no tiene un formato válido";
 
+    case "auth/email-already-in-use":
+      return "Este correo ya está registrado";
+
     case "auth/too-many-requests":
       return "Demasiados intentos. Intenta más tarde";
 
@@ -16,6 +25,6 @@ export const mapearErrorFirebase = (error) => {
       return "Esta cuenta fue deshabilitada";
 
     default:
-      return "Correo o contraseña incorrectos";
+      return "Ocurrió un error de autenticación";
   }
 };

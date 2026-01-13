@@ -173,7 +173,7 @@ export default function Detalle() {
                 </button>
               </div>
 
-              <Link to="/chat" className="pd-contactBtn">
+              <Link to="/chats" className="pd-contactBtn">
                 Contactar Vendedor
               </Link>
             </div>

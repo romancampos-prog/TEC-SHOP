@@ -1,5 +1,5 @@
 import { validarNombreProducto, validarDescripcionProducto, validarPrecioProducto, validarCatergoriaProducto, validarEstadoProducto, validarFotoProducto } from "../validarCampos/validarCampo";
-import { subirFotoFirebase } from "../fotoFirebase";
+
 
 export function validarInformacion (producto) {
    let error

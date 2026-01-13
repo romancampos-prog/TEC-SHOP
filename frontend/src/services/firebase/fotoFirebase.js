@@ -1,19 +1,20 @@
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getAuth } from "firebase/auth";
+import { app } from "./firebase.config";
 
 export async function subirFotoFirebase(foto) {
   if (!(foto instanceof File)) {
     throw new Error("Archivo inválido para subir");
   }
 
-  const auth = getAuth();
+  const auth = getAuth(app);
   const user = auth.currentUser;
 
   if (!user) {
     throw new Error("Usuario no autenticado");
   }
 
-  const storage = getStorage();
+  const storage = getStorage(app);
 
   // 🔹 nombre único (uid + timestamp)
   const nombreArchivo = `${user.uid}_${Date.now()}.jpg`;

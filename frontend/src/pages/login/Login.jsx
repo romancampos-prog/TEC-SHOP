@@ -7,14 +7,11 @@ import { mapearErrorFirebase } from "../../services/firebase/autenticacion/error
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-  // para cambiar de pagina
   const navigate = useNavigate();
 
-  // variables para la animacion
   const [active, setActive] = useState(false);
   const wrapperRef = useRef(null);
 
-  // variables para login
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [confirmContra, setConfirmContra] = useState("");
@@ -30,8 +27,8 @@ export default function Login() {
     try {
       setLoading(true);
 
-      await registroUsuario({ usuario, correo, contrasena, confirmContra }); // firebase
-      await enviarRegistroABackend({ usuario, correo }); // back
+      await registroUsuario({ usuario, correo, contrasena, confirmContra });
+      // await enviarRegistroABackend({ usuario, correo });
 
       setResgistroExitoso(true);
       setCorreo("");
@@ -39,7 +36,11 @@ export default function Login() {
       setContrasena("");
       setUsuario("");
     } catch (error) {
-      setErrorMsj(mapearErrorFirebase(error));
+      if (error.code) {
+        setErrorMsj(mapearErrorFirebase(error));
+      } else {
+        setErrorMsj(error.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -51,14 +52,16 @@ export default function Login() {
 
     try {
       await loginUsuario({ correo, contrasena });
-      console.log("login correcto");
       navigate("/inicio");
     } catch (error) {
-      setErrorMsj(mapearErrorFirebase(error));
+      if (error.code) {
+        setErrorMsj(mapearErrorFirebase(error));
+      } else {
+        setErrorMsj(error.message);
+      }
     }
   };
 
-  // animacion de cambio entre registro y login
   function toggleActive() {
     setActive((v) => !v);
 
@@ -74,13 +77,11 @@ export default function Login() {
     });
   }
 
-  
   const irRecuperar = () => {
     navigate("/recuperaC");
   };
 
-
-  const onForgotKeyDown = (e) => {
+    const onForgotKeyDown = (e) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       irRecuperar();
