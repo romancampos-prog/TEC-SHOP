@@ -11,6 +11,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: { origin: "http://localhost:3000" } // Ajusta al puerto de tu React
+});
 
 // Inicializar Firebase Admin
 admin.initializeApp({
@@ -20,6 +24,8 @@ admin.initializeApp({
 
 const rutasBusqueda = require('./src/routes/busquedas'); 
 app.use('/busquedas', rutasBusqueda);
+const rutasChat = require('./src/routes/chat');
+app.use('/chat', rutasChat);
 
 
 const db = mysql.createConnection({
@@ -29,18 +35,76 @@ const db = mysql.createConnection({
     database: 'campus_shop'
 });
 
+app.get('/chat/conversaciones', async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).send("No token");
+    
+    try {
+        const token = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const uid = decodedToken.uid;
 
-/* ❌ COMENTAR CHAT
-io.on('connection', (socket) => {
-    socket.on('join_chat', (chatId) => socket.join(chatId));
-    socket.on('send_message', (data) => {
-        const query = 'INSERT INTO mensajes (id_chat, id_emisor, contenido) VALUES (?, ?, ?)';
-        db.query(query, [data.id_chat, data.id_emisor, data.contenido], () => {
-            io.to(data.id_chat).emit('receive_message', data);
+        // Buscamos chats donde el usuario sea comprador o vendedor
+        // Nota: Ajusta los nombres de columnas según tu tabla 'chats'
+        const query = `
+            SELECT c.id_chat, 
+            (SELECT nombre_completo FROM usuarios WHERE id_usuario = IF(c.id_comprador = ?, c.id_vendedor, c.id_comprador)) as nombre_contacto,
+            (SELECT contenido FROM mensajes WHERE id_chat = c.id_chat ORDER BY fecha_envio DESC LIMIT 1) as ultimo_msj
+            FROM chats c
+            WHERE c.id_comprador = ? OR c.id_vendedor = ?`;
+
+        db.query(query, [uid, uid, uid], (err, results) => {
+            if (err) return res.status(500).json(err);
+            res.json(results);
         });
+    } catch (e) { res.status(403).send("Token inválido"); }
+});
+
+// 2. Obtener mensajes de un chat específico
+app.get('/chat/mensajes/:idChat', async (req, res) => {
+    const { idChat } = req.params;
+    const query = 'SELECT * FROM mensajes WHERE id_chat = ? ORDER BY fecha_envio ASC';
+    db.query(query, [idChat], (err, results) => {
+        if (err) return res.status(500).json(err);
+        res.json(results);
     });
 });
-*/
+
+
+// Lógica de Sockets
+io.on('connection', (socket) => {
+    console.log('Usuario conectado:', socket.id);
+
+    // Unirse a una sala específica (id_chat)
+    socket.on('join_chat', (id_chat) => {
+        socket.join(id_chat);
+        console.log(`Usuario unido al chat: ${id_chat}`);
+    });
+
+    // Enviar mensaje
+    socket.on('send_message', (data) => {
+        const { id_chat, id_emisor, contenido } = data;
+        const query = 'INSERT INTO mensajes (id_chat, id_emisor, contenido) VALUES (?, ?, ?)';
+        
+        db.query(query, [id_chat, id_emisor, contenido], (err, result) => {
+            if (!err) {
+                // Notificar a todos en la sala (incluyendo al emisor para confirmar)
+                io.to(id_chat).emit('receive_message', {
+                    id_mensaje: result.insertId,
+                    ...data,
+                    fecha_envio: new Date()
+                });
+            }
+        });
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Usuario desconectado');
+    });
+});
+
+// IMPORTANTE: Cambia app.listen por server.listen
+
 
 
 
@@ -288,6 +352,6 @@ app.delete('/productos/:id', async (req, res) => {
 
 
 // ✅ Arranque simple
-app.listen(3001, () => {
-    console.log("✅ Backend corriendo en puerto 3001 (modo prueba)");
+server.listen(3001, () => {
+    console.log("✅ Servidor con Sockets en puerto 3001");
 });
