@@ -14,6 +14,7 @@ export default function Incio_page() {
       try {
         const datos = await obtenerProductosBackend();
         setProductos(datos);
+        console.log("datos ya en el front: ", datos)
       } catch (error) {
         console.error("Error al cargar productos", error);
       } finally {

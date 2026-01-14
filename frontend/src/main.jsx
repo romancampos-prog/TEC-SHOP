@@ -6,8 +6,8 @@ import { AuthProvider } from './contexto/user.Context.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <AuthProvider>
+    
         <App />
-    </AuthProvider>
+  
   </StrictMode>
 )

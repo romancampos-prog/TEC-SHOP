@@ -3,7 +3,7 @@ import { obtenerTokenFirebase } from "../../firebase/autenticacion/obtenerIdToke
 export async function obtenerProductosBackend() {
   const token = await obtenerTokenFirebase();
 
-  const response = await fetch("http://localhost:3001/productos", {
+  const response = await fetch("http://3.84.71.71:3001/productos", {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -14,5 +14,8 @@ export async function obtenerProductosBackend() {
     throw new Error("No se pudieron obtener los productos");
   }
 
-  return response.json();
+  const productoBack = await response.json(); // ✅ CLAVE
+  console.log("Producto del back:", productoBack);
+
+  return productoBack; // ← ahora SÍ es un array
 }

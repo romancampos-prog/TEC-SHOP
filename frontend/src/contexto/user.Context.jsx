@@ -23,12 +23,12 @@ export function AuthProvider({ children }) {
       const token = await firebaseUser.getIdToken();
 
       // 🧠 Perfil desde backend (mock)
-      // const perfil = await obtenerPerfilBackend(token);
+      const perfil = await obtenerPerfilBackend(token);
 
       setUser({
         uid: firebaseUser.uid,
         email: firebaseUser.email,
-        nombre: "Roman", // perfil.nombre,
+        nombre: perfil.nombre,
       });
 
       setLoading(false);

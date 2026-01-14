@@ -3,7 +3,7 @@ import { obtenerTokenFirebase } from "../../firebase/autenticacion/obtenerIdToke
 export async function subirProductoBackend(producto) {
   const token = await obtenerTokenFirebase();
 
-  const response = await fetch("http://localhost:3001/subirProducto", {
+  const response = await fetch("http://3.84.71.71:3001/productos", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

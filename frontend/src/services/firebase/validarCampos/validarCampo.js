@@ -170,11 +170,11 @@ export function validarCatergoriaProducto(categoria) {
     }
 
     const categoriasPermitidas = [
-        "tecnologia",
-        "libros",
-        "ropa",
-        "hogar",
-        "otros",
+        "Computadoras",
+        "Celulares",
+        "Audio y Video",
+        "Componentes",
+        "Accesorios",
     ];
 
     if (!categoriasPermitidas.includes(categoria)) {

@@ -5,7 +5,7 @@ export const enviarRegistroABackend = async ({ nombre_completo, correo_instituci
 
   console.log("🪪 TOKEN EN FRONT:", token);
 
-  const response = await fetch("http://98.92.93.155:3001/usuarios", {
+  const response = await fetch("http://3.84.71.71:3001/usuarios", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -60,9 +60,9 @@ export default function AgregarProducto() {
       nombre: form.nombre,
       descripcion: form.descripcion,
       precio: Number(form.precio),
-      categoria: form.categoria,
+      id_categoria: form.categoria,
       estado: form.estado,
-      fotoUrl: URL_foto, 
+      imagen_url: URL_foto, 
     };
 
     console.log("producto final: ", productoFinal)
@@ -122,11 +122,11 @@ export default function AgregarProducto() {
               Categoría
               <select name="categoria" required value={form.categoria} onChange={handleChange}>
                 <option value="">Selecciona</option>
-                <option value="tecnologia">Tecnología</option>
-                <option value="libros">Libros</option>
-                <option value="ropa">Ropa</option>
-                <option value="hogar">Hogar</option>
-                <option value="otros">Otros</option>
+                <option value="Computadoras">Computadoras</option>
+                <option value="Celulares">Celulares</option>
+                <option value="Audio y Video">Audio y Video</option>
+                <option value="Componentes">Componentes electronicos</option>
+                <option value="Accesorios">Accesorios</option>
               </select>
             </label>
 

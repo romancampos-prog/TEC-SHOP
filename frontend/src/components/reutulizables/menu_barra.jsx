@@ -24,6 +24,8 @@ export default function Menu_Barra({ abierto, onClose }) {
     }
   };
 
+  console.log("User en Menu_Barra:", user);
+
   return (
     <div className={`contenedor-Padre ${abierto ? "abierto" : ""}`}>
       <div className="contenedor-perfil">
