@@ -205,6 +205,37 @@ app.get('/usuarios', async (req, res) => {
 
 //ENDPOINT PRODUCTOS
 
+// GET: Obtener SOLO los productos que yo vendo (Mis Publicaciones)
+app.get('/mis-productos', async (req, res) => {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: "No autorizado" });
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+
+    try {
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const id_usuario = decodedToken.uid; // Tu ID
+
+        // Traemos todo lo que este usuario ha publicado
+        const query = `
+            SELECT * FROM productos 
+            WHERE id_vendedor = ? 
+            ORDER BY fecha_publicacion DESC
+        `;
+
+        db.query(query, [id_usuario], (err, results) => {
+            if (err) return res.status(500).json({ error: err.sqlMessage });
+            res.json(results);
+        });
+
+    } catch (error) {
+        res.status(403).json({ error: "Token inválido" });
+    }
+});
+
 //POST
 app.post('/productos', async (req, res) => {
     const authHeader = req.headers.authorization;
