@@ -27,6 +27,14 @@ app.use('/busquedas', rutasBusqueda);
 const rutasChat = require('./src/routes/chat');
 app.use('/chat', rutasChat);
 
+app.use(cors({
+  origin: [
+    "http://localhost:5173"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 
 const db = mysql.createConnection({
     host: 'localhost',
