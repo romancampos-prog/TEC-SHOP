@@ -10,6 +10,12 @@ import CambioContrasena from "../pages/cambiar/cambioContrasena.jsx";
 import Chats from "../pages/chats/chats";
 import Chat from "../pages/chat/Chat";
 import Detalle from "../pages/detalleP/detalle";
+import Perfil from "./perfil/perfil.jsx";
+import EditarProducto from "./perfil/editarProducto.jsx";
+import Valoracion from "../pages/valoracion/valoracion";
+
+
+
 
 import RutaProtegida from "./RutaProtegida";
 
@@ -20,6 +26,10 @@ export default function AppRoutes() {
         {/* ===== RUTAS PÚBLICAS ===== */}
         <Route path="/" element={<Login />} />
         <Route path="/recuperaC" element={<RecuperaC />} />
+        <Route path="/perfil" element={<Perfil/>}/>
+        <Route path="/editarProducto" element={<EditarProducto />} />
+        <Route path="/valoracion" element={<Valoracion />} />
+
 
         {/* ===== RUTAS PROTEGIDAS ===== */}
         <Route
