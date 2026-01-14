@@ -1,8 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const admin = require('firebase-admin');
-const db = require('../../db'); // Asegúrate de exportar tu conexión 'db' en un archivo aparte o pasarla aquí
+const mysql = require('mysql2');
 
+// Reutilizamos la configuración de tu DB
+// (Nota: Idealmente deberías tener un archivo db.js compartido, pero esto funciona directo)
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'resp',
+    password: 'resp_01_02',
+    database: 'campus_shop'
+});
 // Obtener lista de chats del usuario logueado
 router.get('/mis-chats', async (req, res) => {
     const authHeader = req.headers.authorization;
