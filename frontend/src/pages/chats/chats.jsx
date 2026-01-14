@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./chats.css";
 
 function obtenerHoraActual() {
@@ -12,7 +13,13 @@ function obtenerIniciales(nombre) {
   return (a + b).toUpperCase();
 }
 
-export default function VistaChat() {
+export default function Chats() {
+  const navigate = useNavigate();
+
+  const irA = (ruta) => {
+    navigate(ruta);
+  };
+
   // ====== conversaciones de prueba (sin BD) ======
   const [conversaciones, setConversaciones] = useState(() => [
     {
@@ -80,8 +87,6 @@ export default function VistaChat() {
 
   const seleccionarConversacion = (id) => {
     setIdConversacionActiva(id);
-
-    // al entrar a la conversación: limpiar no leidos (
     setConversaciones((prev) => prev.map((c) => (c.id === id ? { ...c, noLeidos: 0 } : c)));
   };
 
@@ -134,7 +139,7 @@ export default function VistaChat() {
   return (
     <div className="pagina-chat">
       <div className="contenedor-chat">
-        {/*  PANEL IZQUIERDO (lista de conversaciones) */}
+        {/* PANEL IZQUIERDO */}
         <aside className="barra-lateral-chat">
           <div className="barra-lateral-top">
             <div className="barra-lateral-titulo">Chats</div>
@@ -198,7 +203,7 @@ export default function VistaChat() {
           </div>
         </aside>
 
-        {/*PANEL DERECHO (conversación) */}
+        {/* PANEL DERECHO */}
         <section className="principal-chat">
           <div className="encabezado-chat">
             <div className="encabezado-izq-chat">
@@ -251,11 +256,7 @@ export default function VistaChat() {
             </button>
           </div>
 
-          <button
-            className="boton-valorar-chat"
-            type="button"
-            onClick={() => alert("Pendiente: lógica para valorar usuario")}
-          >
+          <button className="boton-valorar-chat" type="button" onClick={() => irA("/valoracion")}>
             Valorar Usuario
           </button>
         </section>
