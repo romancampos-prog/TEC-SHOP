@@ -76,7 +76,12 @@ const rutasChat = require('./src/routes/chat');
 app.use('/chat', rutasChat);
 
 // --- ENDPOINTS DE CHAT (HISTORIAL) ---
+//API prueba serv
 
+app.get("/active", async (req, res) => {
+
+  return res.status(500).send("Activo");
+});
 //APIs Chat
 
 app.post("/chat/crear-o-obtener", async (req, res) => {
