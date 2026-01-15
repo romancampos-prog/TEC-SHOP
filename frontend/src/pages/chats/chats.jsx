@@ -1,9 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { conectarSocket } from "../../services/socket/socket";
+import { obtenerConversaciones } from "../../services/socket/chat/obtenerConversaciones";
+import { obtenerMensajes } from "../../services/socket/chat/obtenerMensajes";
+import { obtenerUidActual } from "../../services/firebase/autenticacion/obtenerUIDActual";
 import "./chats.css";
 
-function obtenerHoraActual() {
-  return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+/* =======================
+   Helpers (NO TOCAR)
+======================= */
+function obtenerHora(fecha) {
+  return new Date(fecha).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function obtenerIniciales(nombre) {
@@ -13,252 +23,235 @@ function obtenerIniciales(nombre) {
   return (a + b).toUpperCase();
 }
 
+/* =======================
+   COMPONENTE
+======================= */
 export default function Chats() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
 
-  const irA = (ruta) => {
-    navigate(ruta);
-  };
+  const uidActual = obtenerUidActual();
 
-  // ====== conversaciones de prueba (sin BD) ======
-  const [conversaciones, setConversaciones] = useState(() => [
-    {
-      id: "maria",
-      nombre: "María García",
-      mensajes: [
-        { id: 1, lado: "seller", titulo: "María García", texto: "Hola, ¿cómo estás?", hora: "19:35" },
-        { id: 2, lado: "buyer", titulo: "Tú", texto: "hola", hora: "19:36" },
-      ],
-      noLeidos: 2,
-    },
-    {
-      id: "juan",
-      nombre: "Juan Pérez",
-      mensajes: [{ id: 3, lado: "seller", titulo: "Juan Pérez", texto: "Nos vemos mañana", hora: "18:20" }],
-      noLeidos: 0,
-    },
-    {
-      id: "ana",
-      nombre: "Ana Martínez",
-      mensajes: [{ id: 4, lado: "seller", titulo: "Ana Martínez", texto: "Gracias por tu ayuda", hora: "17:45" }],
-      noLeidos: 1,
-    },
-    {
-      id: "carlos",
-      nombre: "Carlos López",
-      mensajes: [{ id: 5, lado: "seller", titulo: "Carlos López", texto: "Perfecto, entendido", hora: "15:30" }],
-      noLeidos: 0,
-    },
-    {
-      id: "laura",
-      nombre: "Laura Sánchez",
-      mensajes: [{ id: 6, lado: "seller", titulo: "Laura Sánchez", texto: "Te envío los documentos", hora: "Ayer" }],
-      noLeidos: 0,
-    },
-  ]);
+  /* ===== SOCKET ===== */
+  const [socket, setSocket] = useState(null);
 
-  const [idConversacionActiva, setIdConversacionActiva] = useState("maria");
+  /* ===== CONVERSACIONES ===== */
+  const [conversaciones, setConversaciones] = useState([]);
+  const [idConversacionActiva, setIdConversacionActiva] = useState(null);
+
+  /* ===== MENSAJES ===== */
+  const [mensajes, setMensajes] = useState([]);
   const [textoMensaje, setTextoMensaje] = useState("");
-  const [textoBusqueda, setTextoBusqueda] = useState("");
 
   const refScroll = useRef(null);
 
-  const conversacionActiva = useMemo(
-    () => conversaciones.find((c) => c.id === idConversacionActiva) || null,
-    [conversaciones, idConversacionActiva]
-  );
+  /* =======================
+     CONECTAR SOCKET
+  ======================= */
+  useEffect(() => {
+    let s;
 
-  const conversacionesFiltradas = useMemo(() => {
-    const q = textoBusqueda.trim().toLowerCase();
-    if (!q) return conversaciones;
+    (async () => {
+      s = await conectarSocket();
+      setSocket(s);
 
-    return conversaciones.filter((c) => {
-      const nombre = (c.nombre || "").toLowerCase();
-      const ultimo = (c.mensajes?.[c.mensajes.length - 1]?.texto || "").toLowerCase();
-      return nombre.includes(q) || ultimo.includes(q);
+      s.on("connect", () => {
+        console.log("🟢 Socket conectado:", s.id);
+      });
+
+      s.on("disconnect", () => {
+        console.log("🔴 Socket desconectado");
+      });
+    })();
+
+    return () => {
+      s?.disconnect();
+    };
+  }, []);
+
+  /* =======================
+     CARGAR CONVERSACIONES
+  ======================= */
+  useEffect(() => {
+    async function cargar() {
+      const data = await obtenerConversaciones();
+
+      const normalizadas = data.map((c) => ({
+        id: c.id_chat,
+        nombre: c.nombre_contacto,
+        ultimo: c.ultimo_msj,
+      }));
+
+      setConversaciones(normalizadas);
+
+      const idChatURL = params.get("idChat");
+      if (idChatURL) {
+        setIdConversacionActiva(Number(idChatURL));
+      } else if (normalizadas.length > 0) {
+        setIdConversacionActiva(normalizadas[0].id);
+      }
+    }
+
+    cargar();
+  }, []);
+
+  /* =======================
+     CARGAR MENSAJES
+  ======================= */
+  useEffect(() => {
+    if (!idConversacionActiva) return;
+
+    async function cargarMensajes() {
+      const data = await obtenerMensajes(idConversacionActiva);
+
+      const normalizados = data.map((m) => ({
+        id: m.id_mensaje,
+        lado: m.id_emisor === uidActual ? "buyer" : "seller",
+        titulo: m.id_emisor === uidActual ? "Tú" : "Vendedor",
+        texto: m.contenido,
+        hora: obtenerHora(m.fecha_envio),
+      }));
+
+      setMensajes(normalizados);
+    }
+
+    cargarMensajes();
+  }, [idConversacionActiva]);
+
+  /* =======================
+     JOIN CHAT
+  ======================= */
+  useEffect(() => {
+    if (!socket || !idConversacionActiva) return;
+
+    socket.emit("join_chat", idConversacionActiva);
+  }, [socket, idConversacionActiva]);
+
+  /* =======================
+     RECIBIR MENSAJES
+  ======================= */
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("receive_message", (msg) => {
+      setMensajes((prev) => [
+        ...prev,
+        {
+          id: msg.id_mensaje,
+          lado: msg.id_emisor === uidActual ? "buyer" : "seller",
+          titulo: msg.id_emisor === uidActual ? "Tú" : "Vendedor",
+          texto: msg.contenido,
+          hora: obtenerHora(msg.fecha_envio),
+        },
+      ]);
     });
-  }, [conversaciones, textoBusqueda]);
 
+    return () => socket.off("receive_message");
+  }, [socket]);
+
+  /* =======================
+     SCROLL
+  ======================= */
   useEffect(() => {
     if (refScroll.current) {
       refScroll.current.scrollTop = refScroll.current.scrollHeight;
     }
-  }, [idConversacionActiva, conversacionActiva?.mensajes?.length]);
+  }, [mensajes]);
 
-  const seleccionarConversacion = (id) => {
-    setIdConversacionActiva(id);
-    setConversaciones((prev) => prev.map((c) => (c.id === id ? { ...c, noLeidos: 0 } : c)));
-  };
+  const conversacionActiva = useMemo(
+    () => conversaciones.find((c) => c.id === idConversacionActiva),
+    [conversaciones, idConversacionActiva]
+  );
 
+  /* =======================
+     ENVIAR MENSAJE
+  ======================= */
   const enviarMensaje = () => {
-    const t = textoMensaje.trim();
-    if (!t) return;
-    if (!conversacionActiva) return;
+    if (!textoMensaje.trim() || !socket) return;
 
-    const hora = obtenerHoraActual();
-    const nuevoMensaje = {
-      id: Date.now() + Math.random(),
-      lado: "buyer",
-      titulo: "Tú",
-      texto: t,
-      hora,
-    };
-
-    setConversaciones((prev) =>
-      prev.map((c) => {
-        if (c.id !== conversacionActiva.id) return c;
-        const nuevosMensajes = [...(c.mensajes || []), nuevoMensaje];
-        return { ...c, mensajes: nuevosMensajes };
-      })
-    );
+    socket.emit("send_message", {
+      id_chat: idConversacionActiva,
+      id_emisor: uidActual,
+      contenido: textoMensaje.trim(),
+    });
 
     setTextoMensaje("");
   };
 
-  const alPresionarTecla = (e) => {
-    if (e.key === "Enter") enviarMensaje();
-  };
-
-  const obtenerUltimoMensajeDe = (conversacion) => {
-    const ultimo = conversacion.mensajes?.[conversacion.mensajes.length - 1];
-    if (!ultimo) return { texto: "Aún no hay mensajes", hora: "" };
-    return { texto: ultimo.texto, hora: ultimo.hora || "" };
-  };
-
-  const crearConversacionPrueba = () => {
-    const nombre = prompt("Nombre del nuevo chat:");
-    if (!nombre) return;
-
-    const id = `${Date.now()}`;
-    const nuevaConversacion = { id, nombre, mensajes: [], noLeidos: 0 };
-
-    setConversaciones((prev) => [nuevaConversacion, ...prev]);
-    setIdConversacionActiva(id);
-  };
-
+  /* =======================
+     UI (NO CAMBIA)
+  ======================= */
   return (
     <div className="pagina-chat">
       <div className="contenedor-chat">
-        {/* PANEL IZQUIERDO */}
         <aside className="barra-lateral-chat">
           <div className="barra-lateral-top">
             <div className="barra-lateral-titulo">Chats</div>
-
-            <div className="barra-lateral-botones">
-              <button
-                className="boton-icono-chat"
-                type="button"
-                onClick={crearConversacionPrueba}
-                title="Nuevo chat"
-              >
-                +
-              </button>
-              <button className="boton-icono-chat" type="button" title="Opciones">
-                ⋮
-              </button>
-            </div>
-          </div>
-
-          <div className="buscador-contenedor-chat">
-            <input
-              className="buscador-chat"
-              value={textoBusqueda}
-              onChange={(e) => setTextoBusqueda(e.target.value)}
-              placeholder="Buscar chats..."
-            />
           </div>
 
           <div className="lista-chat">
-            {conversacionesFiltradas.length === 0 ? (
-              <div className="lista-vacia-chat">No hay chats con ese criterio.</div>
-            ) : (
-              conversacionesFiltradas.map((c) => {
-                const activo = c.id === idConversacionActiva;
-                const { texto: preview, hora } = obtenerUltimoMensajeDe(c);
-
-                return (
-                  <button
-                    key={c.id}
-                    type="button"
-                    className={`item-chat ${activo ? "item-chat-activo" : ""}`}
-                    onClick={() => seleccionarConversacion(c.id)}
-                  >
-                    <div className="avatar-chat">{obtenerIniciales(c.nombre)}</div>
-
-                    <div className="item-cuerpo-chat">
-                      <div className="item-fila1-chat">
-                        <div className="item-nombre-chat">{c.nombre}</div>
-                        <div className="item-hora-chat">{hora}</div>
-                      </div>
-
-                      <div className="item-fila2-chat">
-                        <div className="item-preview-chat">{preview}</div>
-                        {c.noLeidos > 0 && <div className="badge-chat">{c.noLeidos}</div>}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })
-            )}
+            {conversaciones.map((c) => (
+              <button
+                key={c.id}
+                className={`item-chat ${
+                  c.id === idConversacionActiva ? "item-chat-activo" : ""
+                }`}
+                onClick={() => setIdConversacionActiva(c.id)}
+              >
+                <div className="avatar-chat">
+                  {obtenerIniciales(c.nombre)}
+                </div>
+                <div className="item-cuerpo-chat">
+                  <div className="item-nombre-chat">{c.nombre}</div>
+                  <div className="item-preview-chat">
+                    {c.ultimo || "Aún no hay mensajes"}
+                  </div>
+                </div>
+              </button>
+            ))}
           </div>
         </aside>
 
-        {/* PANEL DERECHO */}
         <section className="principal-chat">
           <div className="encabezado-chat">
-            <div className="encabezado-izq-chat">
-              <div className="avatar-chat avatar-encabezado-chat">
-                {obtenerIniciales(conversacionActiva?.nombre || "??")}
-              </div>
+            Chat con: <strong>{conversacionActiva?.nombre || "—"}</strong>
+          </div>
 
-              <div className="encabezado-textos-chat">
-                <div className="encabezado-titulo-chat">
-                  Chat con: <span>{conversacionActiva?.nombre || "Sin chat"}</span>
+          <div className="area-chat" ref={refScroll}>
+            {mensajes.map((m) => (
+              <div
+                key={m.id}
+                className={`fila-mensaje-chat ${
+                  m.lado === "buyer" ? "chat-derecha" : "chat-izquierda"
+                }`}
+              >
+                <div
+                  className={
+                    m.lado === "buyer"
+                      ? "burbuja-comprador"
+                      : "burbuja-vendedor"
+                  }
+                >
+                  <div className="burbuja-titulo">{m.titulo}</div>
+                  <div className="burbuja-texto">{m.texto}</div>
+                  <div className="burbuja-hora">{m.hora}</div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
 
-          {/* mensajes */}
-          <div className="area-chat" ref={refScroll}>
-            {!conversacionActiva || (conversacionActiva.mensajes || []).length === 0 ? (
-              <div className="vacio-chat">Aún no hay mensajes.</div>
-            ) : (
-              conversacionActiva.mensajes.map((m) => {
-                const esComprador = m.lado === "buyer";
-                return (
-                  <div
-                    key={m.id}
-                    className={`fila-mensaje-chat ${esComprador ? "chat-derecha" : "chat-izquierda"}`}
-                  >
-                    <div className={esComprador ? "burbuja-comprador" : "burbuja-vendedor"}>
-                      <div className="burbuja-titulo">{m.titulo}</div>
-                      <div className="burbuja-texto">{m.texto}</div>
-                      <div className="burbuja-hora">{m.hora}</div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          {/* input + enviar */}
           <div className="barra-input-chat">
             <input
               className="input-chat"
               value={textoMensaje}
               onChange={(e) => setTextoMensaje(e.target.value)}
-              onKeyDown={alPresionarTecla}
+              onKeyDown={(e) => e.key === "Enter" && enviarMensaje()}
               placeholder="Escribe un mensaje"
             />
-            <button className="boton-enviar-chat" onClick={enviarMensaje} type="button">
+            <button className="boton-enviar-chat" onClick={enviarMensaje}>
               Enviar
             </button>
           </div>
-
-          <button className="boton-valorar-chat" type="button" onClick={() => irA("/valoracion")}>
-            Valorar Usuario
-          </button>
         </section>
       </div>
     </div>

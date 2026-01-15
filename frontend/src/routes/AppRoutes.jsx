@@ -7,7 +7,6 @@ import Incio_page from "../pages/inicio/inicio-page";
 import AgregarProducto from "../pages/subirProducto/AgregarProducto";
 import CambioContrasena from "../pages/cambiar/cambioContrasena";
 import Chats from "../pages/chats/chats";
-import Chat from "../pages/chat/Chat";
 import Detalle from "../pages/detalleP/detalle";
 import Perfil from "./perfil/perfil";
 import EditarProducto from "./perfil/editarProducto";
@@ -31,7 +30,6 @@ export default function AppRoutes() {
           <Route path="/subirProducto" element={<AgregarProducto />} />
           <Route path="/cambioContrasena" element={<CambioContrasena />} />
           <Route path="/chats" element={<Chats />} />
-          <Route path="/chat" element={<Chat />} />
           <Route path="/detalle" element={<Detalle />} />
           <Route path="/valoracion" element={<Valoracion />} />
           <Route path="/productoDetalle/:id" element={<Detalle/>}/>

@@ -34,7 +34,7 @@ export async function obtenerProductosBackend(
   const data = await response.json();
 
   // 🔍 Debug controlado
-  console.log("Respuesta backend:", data.productos);
+  console.log("Respuesta backend:", data);
 
   return data; // { productos, total, page, limit }
 }

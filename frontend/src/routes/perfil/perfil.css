@@ -1,6 +1,6 @@
 :root{
   --verde-gris: #8fa6a7;
-  --fondo-pagina: #6f7e7f;
+  --fondo-pagina: #bceadc;
   --blanco: #ffffff;
   --texto: #0f172a;
   --texto-suave: #6c7a80;
@@ -19,6 +19,7 @@
   background: var(--fondo-pagina);
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   color: var(--texto);
+  overflow-x: hidden; /* evita scroll horizontal */
 }
 
 .barra-superior-perfil{
@@ -39,7 +40,10 @@
   display: flex;
   justify-content: center;
   padding: 34px 0 60px;
-  height: 100vh;
+
+  /* ✅ cambio clave para celular: NO encierres en 100vh */
+  min-height: 100vh;
+  height: auto;
 }
 
 .tarjeta-perfil{
@@ -174,6 +178,9 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+
+  /*  para que el texto largo NO empuje el layout */
+  min-width: 0;
 }
 
 .etiqueta-contacto{
@@ -185,6 +192,10 @@
   font-size: 20px;
   font-weight: 800;
   color: #0b1220;
+
+  /*  email largo: que se parta */
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .seccion-productos{
@@ -344,4 +355,19 @@
   .nombre-perfil{ font-size: 38px; }
   .producto-item{ flex-direction: column; align-items: stretch; }
   .producto-acciones{ justify-content: flex-end; }
+}
+
+
+@media (max-width: 600px){
+  .barra-superior-perfil{ padding: 16px 18px; }
+  .titulo-barra-superior{ font-size: 26px; }
+
+  .tarjeta-perfil{ width: calc(100% - 24px); border-radius: 18px; }
+  .cuerpo-tarjeta{ padding: 22px 16px 18px; }
+
+  .avatar{ width: 120px; height: 120px; }
+  .nombre-perfil{ font-size: 32px; }
+
+  .icono-contacto{ width: 48px; height: 48px; }
+  .valor-contacto{ font-size: 16px; }
 }

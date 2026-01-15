@@ -7,10 +7,9 @@
   font-family: system-ui, Segoe UI, Roboto, Arial;
 }
 
-/* contenedor general (dos columnas) */
 .contenedor-chat{
-  width: 1120px;
-  height: 640px;
+  width: min(1120px, 100%);
+  height: min(640px, calc(100dvh - 36px));
   background: #ffffff;
   border-radius: 10px;
   overflow: hidden;
@@ -18,13 +17,13 @@
   display: flex;
 }
 
-/* ===== BARRA LATERAL ===== */
 .barra-lateral-chat{
-  width: 340px;
+  width: min(340px, 40vw);
   border-right: 1px solid rgba(0,0,0,.10);
   background: #ffffff;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .barra-lateral-top{
@@ -78,6 +77,7 @@
 .lista-chat{
   overflow-y: auto;
   padding-bottom: 10px;
+  min-height: 0;
 }
 
 .lista-vacia-chat{
@@ -86,7 +86,6 @@
   color: #555;
 }
 
-/* item chat */
 .item-chat{
   width: 100%;
   display: flex;
@@ -175,12 +174,13 @@
   font-weight: 900;
 }
 
-/*  PRINCIPAL  */
 .principal-chat{
   flex: 1;
   display: flex;
   flex-direction: column;
   background: #ffffff;
+  min-width: 0;
+  min-height: 0;
 }
 
 .encabezado-chat{
@@ -209,15 +209,12 @@
   color: #111;
 }
 
-.encabezado-titulo-chat span{
-  font-weight: 900;
-}
-
 .area-chat{
   flex: 1;
   background: #d8d2c7;
   padding: 12px 14px;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .vacio-chat{
@@ -226,7 +223,6 @@
   font-size: 13px;
 }
 
-/* filas */
 .fila-mensaje-chat{
   display: flex;
   margin: 10px 0;
@@ -235,7 +231,6 @@
 .chat-derecha{ justify-content: flex-end; }
 .chat-izquierda{ justify-content: flex-start; }
 
-/* burbujas */
 .burbuja-comprador{
   max-width: 68%;
   background: #dff0c1;
@@ -274,7 +269,6 @@
   margin-top: 6px;
 }
 
-/* input */
 .barra-input-chat{
   display: flex;
   gap: 10px;
@@ -292,10 +286,11 @@
   font-size: 13px;
   outline: none;
   background: #fff;
+  min-width: 0;
 }
 
 .boton-enviar-chat{
-  width: 100px;
+  width: clamp(84px, 22vw, 100px);
   height: 42px;
   border: none;
   border-radius: 10px;
@@ -320,4 +315,37 @@
   background: #6a9997;
   color: #fff;
   box-shadow: 0 1px 0 rgba(0,0,0,.12);
+}
+
+@media (max-width: 768px){
+  .contenedor-chat{
+    height: calc(100dvh - 36px);
+    flex-direction: column;
+  }
+
+  .barra-lateral-chat{
+    width: 100%;
+    max-height: 280px;
+    border-right: none;
+    border-bottom: 1px solid rgba(0,0,0,.10);
+  }
+
+  .principal-chat{
+    flex: 1;
+    min-height: 0;
+  }
+
+  .barra-input-chat{
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .boton-enviar-chat{
+    width: 110px;
+  }
+
+  .boton-valorar-chat{
+    margin: 8px 12px 12px;
+    height: 42px;
+  }
 }

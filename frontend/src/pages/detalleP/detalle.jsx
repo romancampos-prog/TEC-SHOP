@@ -1,9 +1,11 @@
 import "./detalle.css";
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { crearOObtenerChat } from "../../services/socket/chat/crear_chats";
 
 export default function Detalle({ producto, onClose }) {
   const [abierto, setAbierto] = useState(true);
+  const navigate = useNavigate();
 
   const cerrar = () => {
     setAbierto(false);
@@ -41,6 +43,19 @@ export default function Detalle({ producto, onClose }) {
   }).format(Number(producto.precio || 0));
 
   const precioSinMXN = precioFormateado.replace("MXN", "").trim();
+
+  /* =========================
+     CONTACTAR VENDEDOR (CHAT)
+     ========================= */
+  const contactarVendedor = async () => {
+    try {
+      const { id_chat } = await crearOObtenerChat(producto.id_producto);
+      cerrar();
+      navigate(`/chats?idChat=${id_chat}`);
+    } catch (error) {
+      console.error("Error al contactar vendedor:", error);
+    }
+  };
 
   return (
     <div
@@ -105,9 +120,13 @@ export default function Detalle({ producto, onClose }) {
 
             {/* Bottom (solo contacto) */}
             <div className="pd-bottom">
-              <Link to="/chats" className="pd-contactBtn">
+              <button
+                type="button"
+                className="pd-contactBtn"
+                onClick={contactarVendedor}
+              >
                 Contactar Vendedor
-              </Link>
+              </button>
             </div>
           </div>
         </div>
