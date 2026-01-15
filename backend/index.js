@@ -253,7 +253,7 @@ app.post('/productos', async (req, res) => {
         const id_vendedor = decodedToken.uid;
 
         // 3. Obtener datos del body
-        const { id_categoria, nombre, descripcion, precio, imagen_url } = req.body;
+        const { id_categoria, nombre, descripcion, precio, imagen_url, estado} = req.body;
 
         // 4. Validación de campos obligatorios
         if (!id_categoria || !nombre || !precio || !descripcion) {
@@ -261,12 +261,12 @@ app.post('/productos', async (req, res) => {
         }
 
         const query = `
-            INSERT INTO productos (id_vendedor, id_categoria, nombre, descripcion, precio, imagen_url) 
+            INSERT INTO productos (id_vendedor, id_categoria, nombre, descripcion, precio, imagen_url, estado) 
             VALUES (?, ?, ?, ?, ?, ?)
         `;
 
         // 5. Insertar en MySQL
-        db.query(query, [id_vendedor, id_categoria, nombre, descripcion, precio, imagen_url], (err, result) => {
+        db.query(query, [id_vendedor, id_categoria, nombre, descripcion, precio, imagen_url, estado], (err, result) => {
             if (err) {
                 console.error("Error MySQL:", err.sqlMessage);
                 return res.status(500).json({ error: "Error al publicar", detalle: err.sqlMessage });
