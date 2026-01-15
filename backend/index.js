@@ -330,6 +330,7 @@ app.get('/productos', async (req, res) => {
 });
 
 //PUT
+// PUT: Actualizar producto
 app.put('/productos/:id', async (req, res) => {
     const id_producto = req.params.id;
     const authHeader = req.headers.authorization;
@@ -344,32 +345,48 @@ app.put('/productos/:id', async (req, res) => {
         const decodedToken = await admin.auth().verifyIdToken(token);
         const id_usuario_token = decodedToken.uid;
 
-        // 1. Recibimos los datos (incluyendo 'estado' que trae 'nuevo' o 'usado')
-        const { id_categoria, nombre, descripcion, precio, imagen_url, estado } = req.body;
-        
-        // 2. Mapeamos 'estado' del front a 'condicion' de la BD
-        const condicion = estado; 
+        // 🔍 DEBUG: Ver qué está llegando realmente
+        console.log("Datos recibidos para UPDATE:", req.body);
 
-        // 3. QUERY MODIFICADA:
-        // - Cambiamos 'estado = ?' por 'condicion = ?'
-        // - Así guardamos "Nuevo/Usado" en su columna correcta sin romper la disponibilidad
+        // 1. Recibimos todos los posibles datos
+        const { id_categoria, nombre, descripcion, precio, imagen_url, estado, condicion } = req.body;
+        
+        // 2. LÓGICA ROBUSTA: 
+        // Si mandan 'condicion', usamos esa. Si mandan 'estado', usamos esa.
+        // Esto evita errores si el frontend cambia de nombre.
+        const condicionReal = condicion || estado; 
+
+        if (!condicionReal) {
+             console.log("⚠️ Advertencia: No se recibió ni 'condicion' ni 'estado' en el body.");
+        }
+
+        // 3. QUERY CORREGIDA:
+        // Actualizamos 'condicion' con el valor detectado
         const query = `
             UPDATE productos 
             SET id_categoria = ?, nombre = ?, descripcion = ?, precio = ?, imagen_url = ?, condicion = ?
             WHERE id_producto = ? AND id_vendedor = ?
         `;
 
-        db.query(query, [id_categoria, nombre, descripcion, precio, imagen_url, condicion, id_producto, id_usuario_token], (err, result) => {
-            if (err) return res.status(500).json({ error: err.sqlMessage });
-
-            if (result.affectedRows === 0) {
-                return res.status(403).json({ error: "No tienes permiso para editar este producto o no existe." });
+        db.query(query, 
+            [id_categoria, nombre, descripcion, precio, imagen_url, condicionReal, id_producto, id_usuario_token], 
+            (err, result) => {
+            
+            if (err) {
+                console.error("Error SQL:", err.sqlMessage);
+                return res.status(500).json({ error: err.sqlMessage });
             }
 
-            res.json({ message: "Producto actualizado correctamente" });
+            // Si affectedRows es 0, es porque el ID no existe o NO eres el dueño
+            if (result.affectedRows === 0) {
+                return res.status(403).json({ error: "No se pudo actualizar. Verifica que el producto exista y sea tuyo." });
+            }
+
+            res.json({ message: "Producto actualizado correctamente", condicion_guardada: condicionReal });
         });
 
     } catch (error) {
+        console.error("Error Token:", error);
         res.status(403).json({ error: "Token inválido" });
     }
 });
