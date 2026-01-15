@@ -10,13 +10,18 @@ const admin = require("firebase-admin");
 const app = express();
 
 // ================== CORS ==================
-app.use(
-  cors({
-    origin: "*", // 🔥 para evitar problemas en producción
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://tec-shop-4b242.web.app",
+    "https://tec-shop-production.up.railway.app"
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -26,10 +31,17 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "https://tec-shop-4b242.web.app",
+      "https://tec-shop-production.up.railway.app"
+    ],
     methods: ["GET", "POST"],
-  },
+    credentials: true
+  }
 });
+
 
 // ================== FIREBASE ADMIN ==================
 admin.initializeApp({
