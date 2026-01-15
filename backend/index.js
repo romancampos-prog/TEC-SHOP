@@ -9,9 +9,13 @@ const serviceAccount = require('./serviceAccountKey.json');
 // --- CONFIGURACIÓN DE EXPRESS ---
 const app = express();
 
-// 1. Configuración de CORS (Consolidada para evitar duplicidad)
+// 1. Configuración de CORS Actualizada
 app.use(cors({
-    origin: ["http://localhost:5173", "http://localhost:3000"],
+    origin: [
+        "http://localhost:5173", 
+        "http://localhost:3000",
+        "https://tec-shop-4b242.web.app" // <-- Nueva URL de Hosting agregada
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
@@ -23,7 +27,11 @@ app.use(express.urlencoded({ extended: true }));
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: { 
-        origin: ["http://localhost:5173", "http://localhost:3000"],
+        origin: [
+            "http://localhost:5173", 
+            "http://localhost:3000",
+            "https://tec-shop-4b242.web.app" // <-- También actualizar aquí para los Sockets
+        ],
         methods: ["GET", "POST"]
     }
 });
