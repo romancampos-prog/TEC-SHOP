@@ -1,42 +1,39 @@
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
-const bcrypt = require('bcrypt');
-const { Server } = require('socket.io');
 const http = require('http');
+const { Server } = require('socket.io');
 const admin = require('firebase-admin');
 const serviceAccount = require('./serviceAccountKey.json');
 
+// --- CONFIGURACIÓN DE EXPRESS ---
 const app = express();
-app.use(cors());
+
+// 1. Configuración de CORS (Consolidada para evitar duplicidad)
+app.use(cors({
+    origin: ["http://localhost:5173", "http://localhost:3000"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// --- SERVIDOR HTTP Y SOCKET.IO ---
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: { origin: "http://localhost:3000" } // Ajusta al puerto de tu React
+    cors: { 
+        origin: ["http://localhost:5173", "http://localhost:3000"],
+        methods: ["GET", "POST"]
+    }
 });
 
-// Inicializar Firebase Admin
+// --- INICIALIZAR FIREBASE ADMIN ---
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
 
-
-const rutasBusqueda = require('./src/routes/busquedas'); 
-app.use('/busquedas', rutasBusqueda);
-const rutasChat = require('./src/routes/chat');
-app.use('/chat', rutasChat);
-
-app.use(cors({
-  origin: [
-    "http://localhost:5173"
-  ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
-
-
+// --- CONEXIÓN A BASE DE DATOS ---
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'resp',
@@ -44,6 +41,20 @@ const db = mysql.createConnection({
     database: 'campus_shop'
 });
 
+db.connect((err) => {
+    if (err) console.error("❌ Error conectando a MySQL:", err);
+    else console.log("✅ Conectado a MySQL");
+});
+
+// --- RUTAS EXTERNAS ---
+const rutasBusqueda = require('./src/routes/busquedas'); 
+app.use('/busquedas', rutasBusqueda);
+const rutasChat = require('./src/routes/chat');
+app.use('/chat', rutasChat);
+
+// --- ENDPOINTS DE CHAT (HISTORIAL) ---
+
+// 1. Obtener lista de conversaciones
 app.get('/chat/conversaciones', async (req, res) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) return res.status(401).send("No token");
@@ -53,8 +64,6 @@ app.get('/chat/conversaciones', async (req, res) => {
         const decodedToken = await admin.auth().verifyIdToken(token);
         const uid = decodedToken.uid;
 
-        // Buscamos chats donde el usuario sea comprador o vendedor
-        // Nota: Ajusta los nombres de columnas según tu tabla 'chats'
         const query = `
             SELECT c.id_chat, 
             (SELECT nombre_completo FROM usuarios WHERE id_usuario = IF(c.id_comprador = ?, c.id_vendedor, c.id_comprador)) as nombre_contacto,
@@ -79,420 +88,175 @@ app.get('/chat/mensajes/:idChat', async (req, res) => {
     });
 });
 
-
-// Lógica de Sockets
+// --- LÓGICA DE SOCKETS (TIEMPO REAL) ---
 io.on('connection', (socket) => {
-    console.log('Usuario conectado:', socket.id);
+    console.log('🟢 Usuario conectado al Socket:', socket.id);
 
-    // Unirse a una sala específica (id_chat)
+    // Unirse a una sala específica
     socket.on('join_chat', (id_chat) => {
         socket.join(id_chat);
-        console.log(`Usuario unido al chat: ${id_chat}`);
+        console.log(`📥 Usuario ${socket.id} unido al chat: ${id_chat}`);
     });
 
-    // Enviar mensaje
+    // Salir de una sala
+    socket.on('leave_chat', (id_chat) => {
+        socket.leave(id_chat);
+        console.log(`📤 Usuario ${socket.id} salió del chat: ${id_chat}`);
+    });
+
+    // Enviar y recibir mensajes
     socket.on('send_message', (data) => {
         const { id_chat, id_emisor, contenido } = data;
         const query = 'INSERT INTO mensajes (id_chat, id_emisor, contenido) VALUES (?, ?, ?)';
         
         db.query(query, [id_chat, id_emisor, contenido], (err, result) => {
-            if (!err) {
-                // Notificar a todos en la sala (incluyendo al emisor para confirmar)
-                io.to(id_chat).emit('receive_message', {
-                    id_mensaje: result.insertId,
-                    ...data,
-                    fecha_envio: new Date()
-                });
-            }
+            if (err) return console.error("❌ Error al guardar mensaje:", err);
+
+            // Notificar a todos en la sala el nuevo mensaje
+            io.to(id_chat).emit('receive_message', {
+                id_mensaje: result.insertId,
+                id_chat,
+                id_emisor,
+                contenido,
+                fecha_envio: new Date()
+            });
         });
     });
 
     socket.on('disconnect', () => {
-        console.log('Usuario desconectado');
+        console.log('🔴 Usuario desconectado del Socket');
     });
 });
 
-// IMPORTANTE: Cambia app.listen por server.listen
-
-
-
+// --- ENDPOINTS DE USUARIOS ---
 
 app.post('/usuarios', async (req, res) => {
-    const nombre_completo = req.body.usuario;
-    const correo_institucional = req.body.correo;
-    console.log("📦 BODY RECIBIDO:", nombre_completo, correo_institucional);
-
-
-    // 1. Obtener el token del header Authorization
+    const { usuario, correo } = req.body;
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: "No se proporcionó un token válido" });
-    }
-
-    const token = authHeader.split('Bearer ')[1];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: "Token faltante" });
 
     try {
-        // 2. VERIFICAR EL TOKEN (Aquí ocurre la "desencriptación" segura)
-        const decodedToken = await admin.auth().verifyIdToken(token);
-        const id_usuario = decodedToken.uid; // <--- ¡ESTE ES EL ID REAL!
-
-        console.log(
-            "Depuracion",
-            id_usuario,
-            "Token encriptado",
-            token,
-        )
-
-
-        // 3. Validar datos
-        if (!nombre_completo || !correo_institucional) {
-            return res.status(400).json({ error: "Faltan datos en el body" });
-        }
-
-        // 4. Insertar en la BD usando el UID verificado
-        const query = `INSERT INTO usuarios (id_usuario, nombre_completo, correo_institucional) VALUES (?, ?, ?)`;
-
-        db.query(query, [id_usuario, nombre_completo, correo_institucional], (err, result) => {
-            if (err) {
-                console.log("Error 500:" + err.sqlMessage);
-                return res.status(500).json({ error: err.sqlMessage });
-            }
-            res.status(201).json({ message: "Usuario verificado y creado", uid: id_usuario });
-        });
-
-    } catch (error) {
-        console.error("Error verificando token:", error);
-        res.status(403).json({ error: "Token inválido o expirado" });
-    }
-});
-
-
-app.get('/usuarios', async (req, res) => {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: "No autorizado" });
-    }
-
-    const token = authHeader.split('Bearer ')[1];
-
-    try {
-        // 1. Extraer el UID de forma segura desde Firebase
+        const token = authHeader.split('Bearer ')[1];
         const decodedToken = await admin.auth().verifyIdToken(token);
         const id_usuario = decodedToken.uid;
 
-        // 2. Buscar solo el nombre en la base de datos
-        const query = 'SELECT nombre_completo FROM usuarios WHERE id_usuario = ?';
-        
-        db.query(query, [id_usuario], (err, results) => {
-            if (err) {
-                return res.status(500).json({ error: "Error en base de datos" });
-            }
-
-            if (results.length === 0) {
-                return res.status(404).json({ error: "Usuario no encontrado" });
-            }
-
-            // 3. Responder con el nombre
-            res.json({ nombre: results[0].nombre_completo });
+        const query = `INSERT INTO usuarios (id_usuario, nombre_completo, correo_institucional) VALUES (?, ?, ?)`;
+        db.query(query, [id_usuario, usuario, correo], (err) => {
+            if (err) return res.status(500).json({ error: err.sqlMessage });
+            res.status(201).json({ message: "Usuario creado", uid: id_usuario });
         });
-
-    } catch (error) {
-        console.error("Error de token:", error);
-        res.status(403).json({ error: "Sesión inválida" });
-    }
+    } catch (error) { res.status(403).json({ error: "Token inválido" }); }
 });
 
-//ENDPOINT PRODUCTOS
-
-// GET: Obtener SOLO los productos que yo vendo (Mis Publicaciones)
-app.get('/mis-productos', async (req, res) => {
+app.get('/usuarios', async (req, res) => {
     const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: "No autorizado" });
-    }
-
-    const token = authHeader.split('Bearer ')[1];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: "No autorizado" });
 
     try {
+        const token = authHeader.split('Bearer ')[1];
         const decodedToken = await admin.auth().verifyIdToken(token);
-        const id_usuario = decodedToken.uid; // Tu ID
+        const query = 'SELECT nombre_completo FROM usuarios WHERE id_usuario = ?';
+        db.query(query, [decodedToken.uid], (err, results) => {
+            if (err) return res.status(500).json({ error: "Error BD" });
+            if (results.length === 0) return res.status(404).json({ error: "No encontrado" });
+            res.json({ nombre: results[0].nombre_completo });
+        });
+    } catch (error) { res.status(403).json({ error: "Sesión inválida" }); }
+});
 
-        // Traemos todo lo que este usuario ha publicado
-        const query = `
-            SELECT 
-                id_producto,
-                id_categoria,
-                nombre,
-                descripcion, 
-                precio, 
-                imagen_url,     
-                condicion,   
-                fecha_publicacion
-            FROM productos 
-            WHERE id_vendedor = ? 
-            ORDER BY fecha_publicacion DESC
-        `;
+// --- ENDPOINTS DE PRODUCTOS ---
 
-        db.query(query, [id_usuario], (err, results) => {
+app.get('/mis-productos', async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: "No autorizado" });
+    try {
+        const token = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const query = 'SELECT * FROM productos WHERE id_vendedor = ? ORDER BY fecha_publicacion DESC';
+        db.query(query, [decodedToken.uid], (err, results) => {
             if (err) return res.status(500).json({ error: err.sqlMessage });
             res.json(results);
         });
-
-    } catch (error) {
-        res.status(403).json({ error: "Token inválido" });
-    }
+    } catch (error) { res.status(403).json({ error: "Token inválido" }); }
 });
 
-//POST
 app.post('/productos', async (req, res) => {
     const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: "No autorizado" });
-    }
-
-    const token = authHeader.split('Bearer ')[1];
-
+    if (!authHeader) return res.status(401).json({ error: "No autorizado" });
     try {
+        const token = authHeader.split('Bearer ')[1];
         const decodedToken = await admin.auth().verifyIdToken(token);
-        const id_vendedor = decodedToken.uid;
-
-        // 1. Recibimos los datos.
-        // OJO: El frontend te manda 'estado' con valor "nuevo" o "usado".
         const { id_categoria, nombre, descripcion, precio, imagen_url, estado } = req.body;
-
-        // 2. Mapeamos los datos correctamente para la Base de Datos
-        const condicionReal = estado; // Aquí guardamos "nuevo" o "usado"
-        const estadoVenta = "Disponible"; // Forzamos que el producto nazca 'Disponible'
-
-        if (!id_categoria || !nombre || !precio || !descripcion) {
-            return res.status(400).json({ error: "Faltan datos obligatorios del producto" });
-        }
-
-        // 3. Insertamos en las columnas correctas:
-        // 'condicion' recibe "nuevo/usado"
-        // 'estado' recibe "Disponible"
-        const query = `
-            INSERT INTO productos (id_vendedor, id_categoria, nombre, descripcion, precio, imagen_url, condicion, estado) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-
-        db.query(query, 
-            [id_vendedor, id_categoria, nombre, descripcion, precio, imagen_url, condicionReal, estadoVenta], 
-            (err, result) => {
-                if (err) {
-                    console.error("Error MySQL:", err.sqlMessage);
-                    return res.status(500).json({ error: "Error al publicar", detalle: err.sqlMessage });
-                }
-                res.status(201).json({
-                    message: "Producto publicado con éxito",
-                    id_producto: result.insertId
-                });
-        });
-
-    } catch (error) {
-        console.error("Token Error:", error);
-        res.status(403).json({ error: "Sesión inválida o expirada" });
-    }
-});
-
-//GET
-app.get("/productos", async (req, res) => {
-  const authHeader = req.headers.authorization;
-
-  /* ===== 1. Seguridad ===== */
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "No autorizado" });
-  }
-
-  const token = authHeader.split("Bearer ")[1];
-
-  try {
-    /* ===== 2. Verificar token Firebase ===== */
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    const id_vendedor = decodedToken.uid;
-
-    /* ===== 3. Parámetros ===== */
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 12;
-    const categoria = req.query.categoria ?? null; // STRING
-    const busqueda = req.query.q ?? "";             // TEXTO
-    const offset = (page - 1) * limit;
-
-    /* ===== 4. WHERE dinámico ===== */
-    let where = `WHERE estado = "Disponible" AND id_vendedor != ?`;
-    let params = [id_vendedor];
-
-    /* ===== 5. Filtro por categoría ===== */
-    if (categoria !== null) {
-      where += " AND id_categoria = ?";
-      params.push(categoria);
-    }
-
-    /* ===== 6. Búsqueda por texto (case-insensitive) ===== */
-    if (busqueda) {
-      where += `
-        AND (
-          LOWER(nombre) LIKE LOWER(?)
-          OR LOWER(descripcion) LIKE LOWER(?)
-          OR LOWER(id_categoria) LIKE LOWER(?)
-        )
-      `;
-      params.push(
-        `%${busqueda}%`,
-        `%${busqueda}%`,
-        `%${busqueda}%`
-      );
-    }
-
-    /* ===== 7. Query productos ===== */
-    const queryProductos = `
-      SELECT 
-        id_producto,
-        id_categoria,
-        nombre,
-        descripcion,
-        precio,
-        imagen_url,
-        fecha_publicacion
-      FROM productos
-      ${where}
-      ORDER BY fecha_publicacion DESC
-      LIMIT ? OFFSET ?
-    `;
-
-    /* ===== 8. Query total ===== */
-    const queryTotal = `
-      SELECT COUNT(*) AS total
-      FROM productos
-      ${where}
-    `;
-
-    /* ===== 9. Ejecutar queries ===== */
-    db.query(queryProductos, [...params, limit, offset], (err, productos) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: err.sqlMessage });
-      }
-
-      db.query(queryTotal, params, (err2, totalResult) => {
-        if (err2) {
-          console.error(err2);
-          return res.status(500).json({ error: err2.sqlMessage });
-        }
-
-        res.json({
-          productos,
-          total: totalResult[0].total,
-          page,
-          limit,
-        });
-      });
-    });
-  } catch (error) {
-    console.error("Token Error:", error);
-    res.status(403).json({ error: "Sesión inválida o expirada" });
-  }
-});
-
-//PUT
-// PUT: Actualizar producto
-app.put('/productos/:id', async (req, res) => {
-    const id_producto = req.params.id;
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: "No autorizado" });
-    }
-
-    const token = authHeader.split('Bearer ')[1];
-
-    try {
-        const decodedToken = await admin.auth().verifyIdToken(token);
-        const id_usuario_token = decodedToken.uid;
-
-        // 🔍 DEBUG: Ver qué está llegando realmente
-        console.log("Datos recibidos para UPDATE:", req.body);
-
-        // 1. Recibimos todos los posibles datos
-        const { id_categoria, nombre, descripcion, precio, imagen_url, estado, condicion } = req.body;
-        
-        // 2. LÓGICA ROBUSTA: 
-        // Si mandan 'condicion', usamos esa. Si mandan 'estado', usamos esa.
-        // Esto evita errores si el frontend cambia de nombre.
-        const condicionReal = condicion || estado; 
-
-        if (!condicionReal) {
-             console.log("⚠️ Advertencia: No se recibió ni 'condicion' ni 'estado' en el body.");
-        }
-
-        // 3. QUERY CORREGIDA:
-        // Actualizamos 'condicion' con el valor detectado
-        const query = `
-            UPDATE productos 
-            SET id_categoria = ?, nombre = ?, descripcion = ?, precio = ?, imagen_url = ?, condicion = ?
-            WHERE id_producto = ? AND id_vendedor = ?
-        `;
-
-        db.query(query, 
-            [id_categoria, nombre, descripcion, precio, imagen_url, condicionReal, id_producto, id_usuario_token], 
-            (err, result) => {
-            
-            if (err) {
-                console.error("Error SQL:", err.sqlMessage);
-                return res.status(500).json({ error: err.sqlMessage });
-            }
-
-            // Si affectedRows es 0, es porque el ID no existe o NO eres el dueño
-            if (result.affectedRows === 0) {
-                return res.status(403).json({ error: "No se pudo actualizar. Verifica que el producto exista y sea tuyo." });
-            }
-
-            res.json({ message: "Producto actualizado correctamente", condicion_guardada: condicionReal });
-        });
-
-    } catch (error) {
-        console.error("Error Token:", error);
-        res.status(403).json({ error: "Token inválido" });
-    }
-});
-
-// DELETE: Eliminar producto
-// (Este se queda igual, borrar borra todo sin importar la condición)
-app.delete('/productos/:id', async (req, res) => {
-    const id_producto = req.params.id;
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: "No autorizado" });
-    }
-
-    const token = authHeader.split('Bearer ')[1];
-
-    try {
-        const decodedToken = await admin.auth().verifyIdToken(token);
-        const id_usuario_token = decodedToken.uid;
-
-        const query = 'DELETE FROM productos WHERE id_producto = ? AND id_vendedor = ?';
-
-        db.query(query, [id_producto, id_usuario_token], (err, result) => {
+        const query = `INSERT INTO productos (id_vendedor, id_categoria, nombre, descripcion, precio, imagen_url, condicion, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+        db.query(query, [decodedToken.uid, id_categoria, nombre, descripcion, precio, imagen_url, estado, "Disponible"], (err, result) => {
             if (err) return res.status(500).json({ error: err.sqlMessage });
-
-            if (result.affectedRows === 0) {
-                return res.status(403).json({ error: "No puedes eliminar un producto que no te pertenece." });
-            }
-
-            res.json({ message: "Producto eliminado exitosamente" });
+            res.status(201).json({ message: "Producto publicado", id_producto: result.insertId });
         });
-
-    } catch (error) {
-        res.status(403).json({ error: "Token inválido" });
-    }
+    } catch (error) { res.status(403).json({ error: "Token inválido" }); }
 });
 
-// ✅ Arranque simple
-server.listen(3001, () => {
-    console.log("✅ Servidor con Sockets en puerto 3001");
+app.get("/productos", async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: "No autorizado" });
+    try {
+        const token = authHeader.split("Bearer ")[1];
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const id_vendedor_actual = decodedToken.uid;
+
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 12;
+        const offset = (page - 1) * limit;
+        const busqueda = req.query.q ? `%${req.query.q}%` : null;
+
+        let where = 'WHERE estado = "Disponible" AND id_vendedor != ?';
+        let params = [id_vendedor_actual];
+
+        if (busqueda) {
+            where += " AND (nombre LIKE ? OR descripcion LIKE ?)";
+            params.push(busqueda, busqueda);
+        }
+
+        const query = `SELECT * FROM productos ${where} ORDER BY fecha_publicacion DESC LIMIT ? OFFSET ?`;
+        db.query(query, [...params, limit, offset], (err, results) => {
+            if (err) return res.status(500).json({ error: err.sqlMessage });
+            res.json({ productos: results });
+        });
+    } catch (error) { res.status(403).json({ error: "Sesión expirada" }); }
+});
+
+app.put('/productos/:id', async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: "No autorizado" });
+    try {
+        const token = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const { id_categoria, nombre, descripcion, precio, imagen_url, estado, condicion } = req.body;
+        const condicionReal = condicion || estado;
+        const query = `UPDATE productos SET id_categoria = ?, nombre = ?, descripcion = ?, precio = ?, imagen_url = ?, condicion = ? WHERE id_producto = ? AND id_vendedor = ?`;
+        db.query(query, [id_categoria, nombre, descripcion, precio, imagen_url, condicionReal, req.params.id, decodedToken.uid], (err, result) => {
+            if (err) return res.status(500).json({ error: err.sqlMessage });
+            res.json({ message: "Actualizado" });
+        });
+    } catch (error) { res.status(403).json({ error: "Token inválido" }); }
+});
+
+app.delete('/productos/:id', async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: "No autorizado" });
+    try {
+        const token = authHeader.split('Bearer ')[1];
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const query = 'DELETE FROM productos WHERE id_producto = ? AND id_vendedor = ?';
+        db.query(query, [req.params.id, decodedToken.uid], (err, result) => {
+            if (err) return res.status(500).json({ error: err.sqlMessage });
+            res.json({ message: "Eliminado" });
+        });
+    } catch (error) { res.status(403).json({ error: "Token inválido" }); }
+});
+
+// --- ARRANQUE DEL SERVIDOR ---
+const PORT = 3001;
+server.listen(PORT, () => {
+    console.log(`✅ Servidor ejecutándose en puerto ${PORT}`);
+    console.log(`🚀 WebSockets listos para el Chat`);
 });
