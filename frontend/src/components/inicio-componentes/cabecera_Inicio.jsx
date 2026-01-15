@@ -3,28 +3,33 @@ import Input_texto from "../reutulizables/inputs";
 import Menu_Barra from "../reutulizables/menu_barra";
 import "./cabecera_Inicio.css";
 
-
 const CATEGORIAS = [
-  { id: null, label: "Categorías", emoji: "📦" }, // default: todas
-  { id: 1, label: "Computadoras", emoji: "💻" },
-  { id: 2, label: "Celulares", emoji: "📱" },
-  { id: 3, label: "Audio y Video", emoji: "🎧" },
-  { id: 4, label: "Componentes", emoji: "🧩" },
-  { id: 5, label: "Accesorios", emoji: "🔌" },
+  { id: null, label: "Categorías" },
+  { id: "Computadoras", label: "Computadoras" },
+  { id: "Celulares", label: "Celulares" },
+  { id: "Audio y Video", label: "Audio y Video" },
+  { id: "Componentes", label: "Componentes" },
+  { id: "Accesorios", label: "Accesorios" },
 ];
 
-export default function Cabecera_Inicio({ onCategoriaChange }) {
+
+export default function Cabecera_Inicio({  onCategoriaChange, onBuscarChange}) {
+  const [textoBusqueda, setTextoBusqueda] = useState("");
   const [menuAbierto, setMenuAbierto] = useState(false);
 
-  // ===== Categorías (dropdown) =====
+  // ===== Categorías =====
   const [openCategorias, setOpenCategorias] = useState(false);
   const selectorCategoriasRef = useRef(null);
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(CATEGORIAS[0]);
+
+  // ⚠️ IMPORTANTE: iniciar con el objeto completo
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(
+    CATEGORIAS[0]
+  );
 
   const abrir_menu = () => setMenuAbierto(true);
   const cerrar_Menu = () => setMenuAbierto(false);
 
-  // Bloquear scroll del fondo cuando el menú esté abierto
+  // Bloquear scroll cuando menú esté abierto
   useEffect(() => {
     document.body.style.overflow = menuAbierto ? "hidden" : "auto";
     return () => (document.body.style.overflow = "auto");
@@ -33,10 +38,14 @@ export default function Cabecera_Inicio({ onCategoriaChange }) {
   // Cerrar dropdown al click fuera / ESC
   useEffect(() => {
     function onDocClick(e) {
-      if (selectorCategoriasRef.current && !selectorCategoriasRef.current.contains(e.target)) {
+      if (
+        selectorCategoriasRef.current &&
+        !selectorCategoriasRef.current.contains(e.target)
+      ) {
         setOpenCategorias(false);
       }
     }
+
     function onKeyDown(e) {
       if (e.key === "Escape") setOpenCategorias(false);
     }
@@ -58,12 +67,13 @@ export default function Cabecera_Inicio({ onCategoriaChange }) {
   function elegirCategoria(cat) {
     setCategoriaSeleccionada(cat);
     setOpenCategorias(false);
-    onCategoriaChange?.(cat.id); 
+
+    // 🔥 enviar SOLO el id al padre (Inicio)
+    onCategoriaChange?.(cat.id);
   }
 
   return (
     <>
-      {/* ================= HEADER ================= */}
       <header className="contenedor-Padre-Cabecera">
         <div className="contendor-Hijo-arriba">
           <div className="contendor-hijo-izquierda-arriba">
@@ -72,42 +82,34 @@ export default function Cabecera_Inicio({ onCategoriaChange }) {
 
           <div className="contendor-hijo-buscador-derecha-arriba">
             <div className="buscador-con-usuario">
-              {/* ===== Buscador ===== */}
               <div className="buscador-unido">
+                {/* ===== SELECTOR CATEGORÍAS ===== */}
                 <div
-                  className={`selector-categorias ${openCategorias ? "open" : ""}`}
+                  className={`selector-categorias ${
+                    openCategorias ? "open" : ""
+                  }`}
                   ref={selectorCategoriasRef}
                 >
                   <button
                     type="button"
                     className="btn-categorias"
-                    aria-expanded={openCategorias ? "true" : "false"}
-                    aria-haspopup="true"
                     onClick={toggleCategorias}
                   >
                     <span>
-                      {categoriaSeleccionada.id == null
+                      {categoriaSeleccionada.id === null
                         ? "Categorías"
                         : `${categoriaSeleccionada.emoji} ${categoriaSeleccionada.label}`}
                     </span>
 
-                    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24">
                       <path fill="currentColor" d="M7 10l5 5 5-5z" />
                     </svg>
                   </button>
 
-                  <div className="menu-categorias" aria-hidden={openCategorias ? "false" : "true"}>
-                    <button
-                      type="button"
-                      className="menu-enlace"
-                      onClick={() => elegirCategoria(CATEGORIAS[0])}
-                    >
-                      📦 Todas
-                    </button>
-
-                    {CATEGORIAS.slice(1).map((cat) => (
+                  <div className="menu-categorias">
+                    {CATEGORIAS.map((cat) => (
                       <button
-                        key={cat.id}
+                        key={cat.id ?? "all"}
                         type="button"
                         className="menu-enlace"
                         onClick={() => elegirCategoria(cat)}
@@ -118,39 +120,26 @@ export default function Cabecera_Inicio({ onCategoriaChange }) {
                   </div>
                 </div>
 
-                <Input_texto className="input_buscador" />
+                <Input_texto
+                  className="input_buscador"
+                  value={textoBusqueda}
+                  onChange={(e) => setTextoBusqueda(e.target.value)}
+                  placeholder="Buscar productos..."
+                />
 
-                {/* Buscador */}
-                <button className="btn-buscar" aria-label="Buscar" type="button">
-                  <svg
-                    className="search-icon"
-                    viewBox="0 0 24 24"
-                    width="20"
-                    height="20"
-                    aria-hidden="true"
-                  >
+
+                <button className="btn-buscar" type="button"  onClick={() => onBuscarChange?.(textoBusqueda)} >
+                  <svg viewBox="0 0 24 24" width="20" height="20">
                     <path
-                      d="M10 2a8 8 0 105.293 14.293l4.207 4.207 1.414-1.414-4.207-4.207A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"
                       fill="currentColor"
+                      d="M10 2a8 8 0 105.293 14.293l4.207 4.207 1.414-1.414-4.207-4.207A8 8 0 0010 2z"
                     />
                   </svg>
                 </button>
               </div>
-              {/*Icono de usurio y cuenta */}
-              <button
-                type="button"
-                className="btn-menu"
-                onClick={abrir_menu}
-                aria-label="Cuenta / Usuario"
-                title="Usuario"
-              >
-                <svg
-                  className="icon-user"
-                  viewBox="0 0 24 24"
-                  width="22"
-                  height="22"
-                  aria-hidden="true"
-                >
+
+              <button className="btn-menu" onClick={abrir_menu}>
+                <svg viewBox="0 0 24 24" width="22" height="22">
                   <path
                     fill="currentColor"
                     d="M12 12a4.2 4.2 0 1 0-4.2-4.2A4.2 4.2 0 0 0 12 12z"
@@ -164,14 +153,12 @@ export default function Cabecera_Inicio({ onCategoriaChange }) {
             </div>
           </div>
         </div>
-
-        <div className="contenedor-Hijo-abajo">hola</div>
       </header>
 
-      {/* ================= OVERLAY ================= */}
-      {menuAbierto && <div className="overlay-menu" onClick={cerrar_Menu}></div>}
+      {menuAbierto && (
+        <div className="overlay-menu" onClick={cerrar_Menu}></div>
+      )}
 
-      {/* ================= SIDEBAR ================= */}
       <Menu_Barra abierto={menuAbierto} onClose={cerrar_Menu} />
     </>
   );

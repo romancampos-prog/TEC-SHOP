@@ -28,7 +28,7 @@ export default function Login() {
       setLoading(true);
 
       await registroUsuario({ usuario, correo, contrasena, confirmContra });
-      // await enviarRegistroABackend({ usuario, correo });
+      await enviarRegistroABackend({ usuario, correo });
 
       setResgistroExitoso(true);
       setCorreo("");

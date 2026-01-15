@@ -11,30 +11,44 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const auth = getAuth(app);
+    let activo = true; // 🔒 bandera de control (CLAVE)
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!activo) return;
+
+      // 🔴 SIN SESIÓN
       if (!firebaseUser) {
         setUser(null);
         setLoading(false);
         return;
       }
 
-      // 🔑 Token Firebase
-      const token = await firebaseUser.getIdToken();
+      try {
+        // 🔑 Token Firebase
+        const token = await firebaseUser.getIdToken();
+        if (!activo) return;
 
-      // 🧠 Perfil desde backend (mock)
-      const perfil = await obtenerPerfilBackend(token);
+        // 🧠 Perfil desde backend
+        const perfil = await obtenerPerfilBackend(token);
+        if (!activo) return;
 
-      setUser({
-        uid: firebaseUser.uid,
-        email: firebaseUser.email,
-        nombre: perfil.nombre,
-      });
-
-      setLoading(false);
+        setUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          nombre: perfil?.nombre ?? "",
+        });
+      } catch (error) {
+        console.error("Error obteniendo perfil:", error);
+        setUser(null);
+      } finally {
+        if (activo) setLoading(false);
+      }
     });
 
-    return () => unsubscribe();
+    return () => {
+      activo = false;   // 🔥 cancela async pendientes
+      unsubscribe();
+    };
   }, []);
 
   return (

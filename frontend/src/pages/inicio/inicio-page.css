@@ -6,6 +6,50 @@
     background-color: white;
 }
 
+.paginacion {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  margin: 40px 0 20px;
+  padding: 12px 20px;
+}
+
+.btn-paginacion {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  color: #1f2937; /* gris oscuro */
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+.btn-paginacion:hover:not(:disabled) {
+  background: #111827; /* casi negro */
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-paginacion:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.pagina-actual {
+  font-size: 14px;
+  color: #374151;
+  background: #f9fafb;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+}
+
+
 @media (max-width: 870px) {
   .Contendor_cartas_productos {
     grid-template-columns: repeat(2, 1fr);

@@ -1,6 +1,6 @@
 import { obtenerTokenFirebase } from "../../firebase/autenticacion/obtenerIdToken";
 
-export const enviarRegistroABackend = async ({ nombre_completo, correo_institucional }) => {
+export const enviarRegistroABackend = async ({ usuario, correo }) => {
   const token = await obtenerTokenFirebase();
 
   console.log("🪪 TOKEN EN FRONT:", token);
@@ -12,8 +12,8 @@ export const enviarRegistroABackend = async ({ nombre_completo, correo_instituci
       Authorization: `Bearer ${token}`, // 👈 aquí va
     },
     body: JSON.stringify({
-      nombre_completo,
-      correo_institucional,
+      usuario,
+      correo,
     }),
   });
 

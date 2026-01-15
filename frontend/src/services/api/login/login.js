@@ -13,6 +13,10 @@ export async function obtenerPerfilBackend(token) {
 
   if (!response.ok) {
     // opcional: leer mensaje de error del backend
+
+
+
+    
     const errorText = await response.text();
     throw new Error(errorText || "Error al obtener perfil del backend");
   }

@@ -12,7 +12,6 @@ import Detalle from "../pages/detalleP/detalle";
 import Perfil from "./perfil/perfil";
 import EditarProducto from "./perfil/editarProducto";
 import Valoracion from "../pages/valoracion/valoracion";
-
 import ProtectedLayout from "../contexto/ProtectedLayouts";
 
 export default function AppRoutes() {
@@ -35,6 +34,8 @@ export default function AppRoutes() {
           <Route path="/chat" element={<Chat />} />
           <Route path="/detalle" element={<Detalle />} />
           <Route path="/valoracion" element={<Valoracion />} />
+          <Route path="/productoDetalle/:id" element={<Detalle/>}/>
+          <Route path="/productoDetalle" element={<Detalle/>}/>
         </Route>
 
       </Routes>

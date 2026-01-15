@@ -1,34 +1,13 @@
 import "./detalle.css";
-import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import xboxImg from "./xbox.jpg";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
-
-export default function Detalle() {
+export default function Detalle({ producto, onClose }) {
   const [abierto, setAbierto] = useState(true);
-  const [cantidad, setCantidad] = useState(1);
-  const navigate = useNavigate();
-
-
-  const producto = useMemo(
-    () => ({
-      nombre: "Xbox Series X 1TB",
-      categoria: "Consolas",
-      descripcion:
-        "Consola Xbox Series X con 1TB de almacenamiento. Incluye control inalámbrico. Ideal para jugar en 4K y tiempos de carga rápidos con SSD.",
-      disponibilidad: "Disponible",
-      precio: 12999,
-      fotoUrl: xboxImg,
-
-
-      stock: 5, // <-- si es 1 o 0, NO se muestra selector
-    }),
-    []
-  );
 
   const cerrar = () => {
     setAbierto(false);
-    navigate("/");
+    onClose?.();
   };
 
   const manejarClickFondo = (e) => {
@@ -53,32 +32,15 @@ export default function Detalle() {
     };
   }, [abierto]);
 
+  if (!abierto || !producto) return null;
+
   const precioFormateado = new Intl.NumberFormat("es-MX", {
     style: "currency",
     currency: "MXN",
     maximumFractionDigits: 2,
   }).format(Number(producto.precio || 0));
 
-  const precioSinMXN = new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    maximumFractionDigits: 2,
-  })
-    .format(Number(producto.precio || 0))
-    .replace("MXN", "")
-    .trim();
-
-  const maxCantidad = Math.max(1, Number(producto.stock || 1));
-
-  // si el stock baja, ajusta la cantidad para no pasarse
-  useEffect(() => {
-    setCantidad((c) => Math.min(Math.max(1, c), maxCantidad));
-  }, [maxCantidad]);
-
-  const dec = () => setCantidad((c) => Math.max(1, c - 1));
-  const inc = () => setCantidad((c) => Math.min(maxCantidad, c + 1));
-
-  if (!abierto) return null;
+  const precioSinMXN = precioFormateado.replace("MXN", "").trim();
 
   return (
     <div
@@ -89,19 +51,28 @@ export default function Detalle() {
     >
       <div className="pd-page">
         <div className="pd-card" onMouseDown={(e) => e.stopPropagation()}>
-          <button className="pd-cerrar" type="button" onClick={cerrar} aria-label="Cerrar">
+          <button
+            className="pd-cerrar"
+            type="button"
+            onClick={cerrar}
+            aria-label="Cerrar"
+          >
             ✕
           </button>
 
-          {/* Izquierda  */}
+          {/* Izquierda */}
           <div className="pd-left">
             <div className="pd-foto">
-              {producto.fotoUrl ? (
-                <img className="pd-img" src={producto.fotoUrl} alt={producto.nombre} />
+              {producto.imagen_url ? (
+                <img
+                  className="pd-img"
+                  src={producto.imagen_url}
+                  alt={producto.nombre}
+                />
               ) : (
                 <div className="pd-fotoVacia">
                   <div className="pd-fotoIcono">📷</div>
-                  <div className="pd-fotoTexto">Sin foto (mock)</div>
+                  <div className="pd-fotoTexto">Sin foto</div>
                 </div>
               )}
             </div>
@@ -109,9 +80,9 @@ export default function Detalle() {
             <div className="pd-precioTag">{precioSinMXN}</div>
           </div>
 
-          {/*  Derecha*/}
+          {/* Derecha */}
           <div className="pd-derecha">
-            <div className="pd-chip">{producto.categoria}</div>
+            <div className="pd-chip">{producto.id_categoria}</div>
 
             <h1 className="pd-tituloP">{producto.nombre}</h1>
 
@@ -122,7 +93,7 @@ export default function Detalle() {
 
             <div className="pd-status">
               <span className="pd-dot" aria-hidden="true" />
-              <span className="pd-statusText">{producto.disponibilidad}</span>
+              <span className="pd-statusText">Disponible</span>
             </div>
 
             <div className="pd-hr" />
@@ -132,47 +103,8 @@ export default function Detalle() {
 
             <div className="pd-hr" />
 
-            {/* Bottom */}
+            {/* Bottom (solo contacto) */}
             <div className="pd-bottom">
-            
-              {maxCantidad > 1 && (
-                <div className="pd-qtyRow">
-                  <span className="pd-qtyLabel">Cantidad:</span>
-
-                  <div className="pd-stepper" role="group" aria-label="Selector de cantidad">
-                    <button
-                      className="pd-stepBtn"
-                      type="button"
-                      onClick={dec}
-                      aria-label="Disminuir"
-                    >
-                      −
-                    </button>
-                    <span className="pd-stepVal">{cantidad}</span>
-                    <button
-                      className="pd-stepBtn"
-                      type="button"
-                      onClick={inc}
-                      aria-label="Aumentar"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              )}
-
-           
-              <div className="pd-actionsRow pd-actionsRow--solo">
-                <button className="pd-iconBtn" type="button" aria-label="Favorito">
-                  <svg viewBox="0 0 24 24" width="18" height="18">
-                    <path
-                      d="M12 21s-7-4.6-9.5-8.6C.8 9.6 2.1 6.7 5 5.7c1.8-.6 3.7 0 5 1.4 1.3-1.4 3.2-2 5-1.4 2.9 1 4.2 3.9 2.5 6.7C19 16.4 12 21 12 21Z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </button>
-              </div>
-
               <Link to="/chats" className="pd-contactBtn">
                 Contactar Vendedor
               </Link>

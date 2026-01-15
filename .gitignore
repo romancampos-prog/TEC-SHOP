@@ -1,7 +1,9 @@
-# Ignorar mi carpeta de experimentos local
-frontend/
+# Frontend (ignorar solo dependencias y build)
+frontend/node_modules/
+frontend/dist/
+frontend/build/
 
-# Ignorar archivos sensibles del backend
+# Backend
 backend/node_modules/
 backend/serviceAccountKey.json
 backend/.env

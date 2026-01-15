@@ -1,18 +1,19 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./editarProducto.css";
+import { actualizarProductoBack } from "../../services/api/editarProducto/editarProducto";
 
 export default function EditarProducto({
-  alGuardarProducto,   // (productoActualizado) => {}
-  alEliminarProducto,  // (producto) => {}
   regresarA = "/perfil",
-
-
-  tokenProp = "",      
-  onClose,            
+  tokenProp = "",
+  onClose,
 }) {
   const location = useLocation();
   const navigate = useNavigate();
+
+  /* =======================
+     TOKEN Y PRODUCTO
+     ======================= */
 
   const token = useMemo(() => {
     if (tokenProp) return tokenProp;
@@ -33,97 +34,102 @@ export default function EditarProducto({
   const p = useMemo(
     () =>
       productoRecibido || {
-        id: null,
+        id_producto: null,
+        id_categoria: "",
         nombre: "",
         descripcion: "",
         precio: "",
-        estado: "Seminuevo",
-        categoria: "",
+        imagen_url: "",
+        estado: "",
       },
     [productoRecibido]
   );
 
-  const esNuevo = !p.id;
+  /* =======================
+     ESTADO FORMULARIO
+     ======================= */
 
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [precio, setPrecio] = useState("");
-  const [estado, setEstado] = useState("Seminuevo");
+  const [estado, setEstado] = useState("");
+  const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
     setNombre(p.nombre ?? "");
     setDescripcion(p.descripcion ?? "");
-    setPrecio(typeof p.precio === "number" ? String(p.precio) : (p.precio ?? ""));
-    setEstado(p.estado ?? "Seminuevo");
+    setPrecio(
+      typeof p.precio === "number" ? String(p.precio) : (p.precio ?? "")
+    );
+    setEstado(p.condicion ?? "");
   }, [p]);
+
+  /* =======================
+     CERRAR
+     ======================= */
 
   const cerrar = () => {
     if (onClose) {
       onClose();
       return;
     }
-    if (window.opener && !window.opener.closed) {
-      window.close();
-      return;
-    }
-
     navigate(regresarA, { replace: true });
   };
 
   useEffect(() => {
     const manejarEsc = (e) => {
-      if (e.key === "Escape") cerrar();
+      if (e.key === "Escape" && !guardando) cerrar();
     };
     window.addEventListener("keydown", manejarEsc);
     return () => window.removeEventListener("keydown", manejarEsc);
-  }, []);
+  }, [guardando]);
 
-  const guardar = (e) => {
+  /* =======================
+     GUARDAR (PUT BACKEND)
+     ======================= */
+
+  const guardar = async (e) => {
     e.preventDefault();
+    if (guardando) return;
 
     const productoActualizado = {
-      ...p,
-      id: p.id ?? `${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      id: p.id_producto,          // /productos/:id
+      id_categoria: p.id_categoria,
       nombre: nombre.trim(),
       descripcion: descripcion.trim(),
-      precio: precio === "" ? "" : Number(precio),
+      precio: precio === "" ? 0 : Number(precio),
       estado,
+      imagen_url: p.imagen_url,   // se reenvía sin tocar
     };
 
-    alGuardarProducto?.(productoActualizado);
+    try {
+      setGuardando(true);
 
-    const eventoKey = `evento_producto_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-    localStorage.setItem(
-      eventoKey,
-      JSON.stringify({ tipo: "guardar", producto: productoActualizado })
-    );
+      // 🔥 LLAMADA REAL AL BACKEND (PUT)
+      await actualizarProductoBack(productoActualizado);
 
-    if (token) localStorage.removeItem(`producto_editar_${token}`);
+      // 🔔 Avisar a Perfil que refresque
+      window.dispatchEvent(new Event("producto-actualizado"));
 
-    cerrar();
-  };
-
-  const eliminar = () => {
-    const nombreSeguro = (p.nombre || "este producto").trim();
-    const ok = window.confirm(`¿Seguro que quieres eliminar "${nombreSeguro}"?`);
-    if (!ok) return;
-
-    alEliminarProducto?.(p);
-
-    const eventoKey = `evento_producto_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-    localStorage.setItem(
-      eventoKey,
-      JSON.stringify({ tipo: "eliminar", producto: p })
-    );
-
-    if (token) localStorage.removeItem(`producto_editar_${token}`);
-
-    cerrar();
+      if (token) localStorage.removeItem(`producto_editar_${token}`);
+      cerrar();
+    } catch (error) {
+      console.error("Error al actualizar producto:", error);
+      alert("No se pudo actualizar el producto");
+    } finally {
+      setGuardando(false);
+    }
   };
 
   const clicFondo = (e) => {
-    if (e.target.classList.contains("overlay-editar-producto")) cerrar();
+    if (e.target.classList.contains("overlay-editar-producto") && !guardando) {
+      cerrar();
+    }
   };
+
+  /* =======================
+     RENDER
+     ======================= */
 
   return (
     <div className="overlay-editar-producto" onMouseDown={clicFondo}>
@@ -133,17 +139,14 @@ export default function EditarProducto({
           className="boton-cerrar"
           aria-label="Cerrar"
           onClick={cerrar}
-          title="Cerrar"
+          disabled={guardando}
         >
           ✕
         </button>
 
-        <h1 className="titulo-editar-producto">
-          {esNuevo ? "Editar Producto" : "Editar Producto"}
-        </h1>
-
+        <h1 className="titulo-editar-producto">Editar Producto</h1>
         <p className="subtitulo-editar-producto">
-          {esNuevo ? "Agrega la información de tu producto" : "Actualiza la información de tu producto"}
+          Actualiza la información de tu producto
         </p>
 
         <form className="formulario-editar-producto" onSubmit={guardar}>
@@ -153,8 +156,8 @@ export default function EditarProducto({
               className="campo-texto"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              placeholder="Ej. iPhone 13 Pro"
               required
+              disabled={guardando}
             />
           </div>
 
@@ -164,10 +167,12 @@ export default function EditarProducto({
               className="campo-textarea"
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="Describe tu producto..."
               rows={4}
+              disabled={guardando}
             />
-            <div className="contador-caracteres">{descripcion.length} caracteres</div>
+            <div className="contador-caracteres">
+              {descripcion.length} caracteres
+            </div>
           </div>
 
           <div className="fila-dos-columnas">
@@ -179,8 +184,8 @@ export default function EditarProducto({
                   className="input-precio"
                   value={precio}
                   onChange={(e) => setPrecio(indicarSoloNumeros(e.target.value))}
-                  placeholder="12000"
                   inputMode="numeric"
+                  disabled={guardando}
                 />
               </div>
             </div>
@@ -191,38 +196,41 @@ export default function EditarProducto({
                 className="campo-select"
                 value={estado}
                 onChange={(e) => setEstado(e.target.value)}
+                disabled={guardando}
               >
-                <option>Nuevo</option>
-                <option>Seminuevo</option>
-                <option>Usado</option>
+                <option value="nuevo">Nuevo</option>
+                <option value="usado">Usado</option>
               </select>
             </div>
           </div>
 
           <div className="acciones-editar-producto">
-            <button type="submit" className="boton-guardar">
-              {esNuevo ? "Crear" : "Guardar Cambios"}
+            <button
+              type="submit"
+              className="boton-guardar"
+              disabled={guardando}
+            >
+              {guardando ? "Guardando..." : "Guardar Cambios"}
             </button>
 
-            <button type="button" className="boton-cancelar" onClick={cerrar}>
+            <button
+              type="button"
+              className="boton-cancelar"
+              onClick={cerrar}
+              disabled={guardando}
+            >
               Cancelar
             </button>
           </div>
-
-          {!esNuevo && (
-            <div className="contenedor-eliminar">
-              <button type="button" className="boton-eliminar" onClick={eliminar}>
-                Eliminar Producto
-              </button>
-            </div>
-          )}
         </form>
       </div>
     </div>
   );
 }
 
+/* =======================
+   UTIL
+   ======================= */
 function indicarSoloNumeros(valor) {
   return String(valor).replace(/[^\d.]/g, "");
 }
-

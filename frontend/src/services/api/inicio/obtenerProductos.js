@@ -1,9 +1,26 @@
 import { obtenerTokenFirebase } from "../../firebase/autenticacion/obtenerIdToken";
 
-export async function obtenerProductosBackend() {
+export async function obtenerProductosBackend(
+  page = 1,
+  limit = 12,
+  categoria = null,
+  busqueda = ""
+) {
   const token = await obtenerTokenFirebase();
 
-  const response = await fetch("http://3.84.71.71:3001/productos", {
+  let url = `http://3.84.71.71:3001/productos?page=${page}&limit=${limit}`;
+
+  // ===== filtro por categoría (texto) =====
+  if (categoria !== null) {
+    url += `&categoria=${encodeURIComponent(categoria)}`;
+  }
+
+  // ===== búsqueda por texto =====
+  if (busqueda) {
+    url += `&q=${encodeURIComponent(busqueda)}`;
+  }
+
+  const response = await fetch(url, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -14,8 +31,10 @@ export async function obtenerProductosBackend() {
     throw new Error("No se pudieron obtener los productos");
   }
 
-  const productoBack = await response.json(); // ✅ CLAVE
-  console.log("Producto del back:", productoBack);
+  const data = await response.json();
 
-  return productoBack; // ← ahora SÍ es un array
+  // 🔍 Debug controlado
+  console.log("Respuesta backend:", data.productos);
+
+  return data; // { productos, total, page, limit }
 }

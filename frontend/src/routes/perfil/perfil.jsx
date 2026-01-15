@@ -1,22 +1,29 @@
-import React, { useEffect, useMemo, useCallback, useState } from "react";
+import { useEffect, useMemo, useCallback, useState } from "react";
 import "./perfil.css";
 import EditarProducto from "./editarProducto"; 
-
+import { useAuth } from "../../contexto/user.Context";
+import { obtenerProductosBack } from "../../services/api/productos_del_Usuario/productos_del_usuario";
+import { eliminarProductoBack } from "../../services/api/eliminarProducto/eliminarProducto";
+import { eliminarImagenFirebase } from "../../services/firebase/elimar_imagen/eliminar_imagen_firebase";
 
 export default function Perfil({
-  usuario,
-  productos = [],
-  alEditarPerfil,
   alGuardarProducto,   // (productoActualizado) => {}
   alEliminarProducto,  // (producto) => {}
 }) {
+  //obtener nombre del usuario de la sesion 
+  const {user} = useAuth();
+  
+  // variable para prodcutos
+  const [productos, setProductos] = useState([]);
+  const [cargandoProductos, setCargandoProductos] = useState(true);
+
+
   const u = useMemo(
     () => ({
-      nombre: usuario?.nombre ?? "Roman",
-      correo: usuario?.correo ?? "21240198@leon.tecnm.mx",
-      fotoUrl: usuario?.fotoUrl ?? "",
+      nombre: user?.nombre,
+      correo: user?.email,
     }),
-    [usuario]
+    [user]
   );
 
   const [mostrarEditor, setMostrarEditor] = useState(false);
@@ -32,8 +39,8 @@ export default function Perfil({
       nombre: "",
       descripcion: "",
       precio: "",
-      estado: "Seminuevo",
-      categoria: "",
+      estado: "",
+      id_categoria: "",
     }),
     []
   );
@@ -69,15 +76,81 @@ export default function Perfil({
   }, [tokenEditor]);
 
   const eliminarDesdeLista = useCallback(
-    (evento, producto) => {
-      evento?.stopPropagation?.();
-      const nombreSeguro = (producto?.nombre || "este producto").trim();
-      const ok = window.confirm(`¿Seguro que quieres eliminar "${nombreSeguro}"?`);
-      if (!ok) return;
-      alEliminarProducto?.(producto);
-    },
-    [alEliminarProducto]
-  );
+  async (evento, producto) => {
+    evento?.stopPropagation?.();
+
+    const nombreSeguro = (producto?.nombre || "este producto").trim();
+    const ok = window.confirm(`¿Seguro que quieres eliminar "${nombreSeguro}"?`);
+    if (!ok) return;
+
+    // ✅ Guardar URL antes de borrar
+    const imagenUrl = producto.imagen_url;
+
+    try {
+      // 🔥 1. ELIMINAR PRODUCTO EN BACKEND
+      await eliminarProductoBack(producto.id_producto);
+
+      // 🔥 2. SOLO SI BACKEND OK → borrar imagen en Firebase
+      if (imagenUrl) {
+        try {
+          await eliminarImagenFirebase(imagenUrl);
+        } catch (firebaseError) {
+          console.warn(
+            "Producto eliminado, pero la imagen no se pudo borrar:",
+            firebaseError
+          );
+          // 👉 aquí NO bloqueamos nada, el producto ya se eliminó
+        }
+      }
+
+      // 🔄 refrescar lista
+      window.dispatchEvent(new Event("producto-actualizado"));
+
+    } catch (error) {
+      console.error("Error al eliminar producto:", error);
+      alert("No se pudo eliminar el producto");
+    }
+  },
+  []
+);
+
+
+
+ // para traer productos del usuario del back
+  useEffect(() => {
+    let activo = true;
+
+    const cargarProductos = async () => {
+      try {
+        const data = await obtenerProductosBack();
+        
+        if (activo) setProductos(data ?? []);
+      } catch (error) {
+        console.error("Error al obtener productos:", error);
+        if (activo) setProductos([]);
+      } finally {
+        if (activo) setCargandoProductos(false);
+      }
+    };
+
+    cargarProductos();
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+  const refrescar = () => {
+    obtenerProductosBack()
+      .then((data) => setProductos(data ?? []))
+      .catch(() => setProductos([]));
+  };
+
+  window.addEventListener("producto-actualizado", refrescar);
+  return () => window.removeEventListener("producto-actualizado", refrescar);
+}, []);
+
 
   return (
     <div className="pagina-perfil">
@@ -90,32 +163,13 @@ export default function Perfil({
           <div className="encabezado-tarjeta">
             <h2 className="titulo-encabezado">Información Personal</h2>
 
-            <button
-              type="button"
-              className="boton-icono"
-              aria-label="Editar información personal"
-              onClick={() => alEditarPerfil?.()}
-              title="Editar"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 20h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                <path
-                  d="M16.5 3.5a2.121 2.121 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5Z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
           </div>
 
           <div className="cuerpo-tarjeta">
             {/* Avatar */}
             <div className="seccion-avatar">
               <div className="avatar" aria-label="Foto de perfil">
-                {u.fotoUrl ? (
-                  <img className="avatar-imagen" src={u.fotoUrl} alt={`Foto de ${u.nombre}`} />
-                ) : (
+                
                   <div className="avatar-placeholder" aria-hidden="true">
                     <svg width="54" height="54" viewBox="0 0 24 24" fill="none">
                       <path
@@ -132,11 +186,10 @@ export default function Perfil({
                       />
                     </svg>
                   </div>
-                )}
+                
               </div>
 
               <h3 className="nombre-perfil">{u.nombre}</h3>
-              <p className="correo-perfil">{u.correo}</p>
             </div>
 
             {/* Contacto */}
@@ -190,7 +243,7 @@ export default function Perfil({
                 <div className="lista-productos">
                   {productos.map((p, idx) => (
                     <div
-                      key={p.id ?? `${p.nombre}-${idx}`}
+                      key={p.id_producto}
                       className="producto-item producto-item--clic"
                       role="button"
                       tabIndex={0}
@@ -204,7 +257,7 @@ export default function Perfil({
                         <div className="producto-nombre">{p.nombre ?? "Producto"}</div>
 
                         <div className="producto-detalle">
-                          <span>{p.categoria ?? "Sin categoría"}</span>
+                          <span>{p.id_categoria ?? "Sin categoría"}</span>
                           <span className="punto-separador">•</span>
                           <span>
                             {typeof p.precio === "number"
@@ -245,9 +298,9 @@ export default function Perfil({
               <button
                 type="button"
                 className="boton boton-principal"
-                onClick={() => alEditarPerfil?.()}
+                disabled
               >
-                Editar Perfil
+                Para editar perfil comuniquese al correo tec.Shop@gmail.com
               </button>
             </div>
           </div>
