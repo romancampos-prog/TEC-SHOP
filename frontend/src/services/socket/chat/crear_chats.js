@@ -4,7 +4,7 @@ export async function crearOObtenerChat(id_producto) {
   const token = await obtenerTokenFirebase();
 
   const resp = await fetch(
-    "http://3.84.71.71:3001/chat/crear-o-obtener",
+    "https://tec-shop-production.up.railway.app/chat/crear-o-obtener",
     {
       method: "POST",
       headers: {

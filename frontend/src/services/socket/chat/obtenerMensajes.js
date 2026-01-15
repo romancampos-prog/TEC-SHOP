@@ -4,7 +4,7 @@ export async function obtenerMensajes(idChat) {
   const token = await obtenerTokenFirebase();
 
   const response = await fetch(
-    `http://3.84.71.71:3001/chat/mensajes/${idChat}`,
+    `https://tec-shop-production.up.railway.app/chat/mensajes/${idChat}`,
     {
       method: "GET",
       headers: {

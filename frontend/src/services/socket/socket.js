@@ -5,7 +5,7 @@ let socket = null;
 export async function conectarSocket() {
   if (socket) return socket;
 
-  socket = io("http://3.84.71.71:3001", {
+  socket = io("https://tec-shop-production.up.railway.app", {
     transports: ["websocket"],
     autoConnect: true,
   });

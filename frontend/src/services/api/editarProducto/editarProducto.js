@@ -4,7 +4,7 @@ export async function actualizarProductoBack(producto) {
   const token = await obtenerTokenFirebase();
 
   const response = await fetch(
-    `http://3.84.71.71:3001/productos/${producto.id}`,
+    `https://tec-shop-production.up.railway.app/productos/${producto.id}`,
     {
       method: "PUT",
       headers: {

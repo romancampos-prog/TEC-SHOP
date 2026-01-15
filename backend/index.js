@@ -9,34 +9,26 @@ const admin = require("firebase-admin");
 // ================== APP ==================
 const app = express();
 
-// ===== CORS PRE-FLIGHT FIX (OBLIGATORIO) =====
-app.options("*", cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "https://tec-shop-4b242.web.app"
-  ],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
-
-
-
 // ================== CORS ==================
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://tec-shop-4b242.web.app",
+];
+
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "https://tec-shop-4b242.web.app"
-  ],
+  origin: (origin, callback) => {
+    // permite requests sin origin (Postman, backend-to-backend)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
-
-
-
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -46,24 +38,24 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:3000",
-      "https://tec-shop-4b242.web.app"
-    ],
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
-    credentials: true
-  }
+    credentials: true,
+  },
 });
-
-
 
 // ================== FIREBASE ADMIN ==================
-admin.initializeApp({
-  credential: admin.credential.cert(
-    JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-  ),
-});
+try {
+  admin.initializeApp({
+    credential: admin.credential.cert(
+      JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+    ),
+  });
+  console.log("✅ Firebase Admin inicializado");
+} catch (error) {
+  console.error("❌ Error Firebase Admin:", error.message);
+  process.exit(1); // evita crash-loop en Railway
+}
 
 // ================== MYSQL ==================
 const db = mysql.createConnection({
@@ -101,7 +93,10 @@ io.on("connection", (socket) => {
       "INSERT INTO mensajes (id_chat, id_emisor, contenido) VALUES (?, ?, ?)";
 
     db.query(q, [id_chat, id_emisor, contenido], (err, result) => {
-      if (err) return console.error(err);
+      if (err) {
+        console.error("❌ Error mensaje:", err);
+        return;
+      }
 
       io.to(id_chat).emit("receive_message", {
         id_mensaje: result.insertId,

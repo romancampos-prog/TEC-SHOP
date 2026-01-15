@@ -5,7 +5,7 @@ export const enviarRegistroABackend = async ({ usuario, correo }) => {
 
   console.log("🪪 TOKEN EN FRONT:", token);
 
-  const response = await fetch("http://3.84.71.71:3001/usuarios", {
+  const response = await fetch("https://tec-shop-production.up.railway.app/usuarios", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -3,7 +3,7 @@ export async function obtenerPerfilBackend(token) {
     throw new Error("Token no proporcionado");
   }
 
-  const response = await fetch("http://3.84.71.71:3001/usuarios", {
+  const response = await fetch("https://tec-shop-production.up.railway.app/usuarios", {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
