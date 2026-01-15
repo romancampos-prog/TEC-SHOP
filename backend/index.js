@@ -299,129 +299,54 @@ app.post('/productos', async (req, res) => {
 });
 
 //GET
-app.get("/productos", async (req, res) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "No autorizado" });
-  }
-
-  const token = authHeader.split("Bearer ")[1];
-
+router.get("/productos", async (req, res) => {
   try {
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    const id_vendedor = decodedToken.uid;
+    const pagina = parseInt(req.query.pagina) || 1;
+    const limite = parseInt(req.query.limite) || 12;
+    const categoria = req.query.categoria ?? null;
 
-    // paginación
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 12;
-    const offset = (page - 1) * limit;
+    const offset = (pagina - 1) * limite;
 
-    // total de productos
-    const totalQuery = `
+    let where = "";
+    let params = [];
+
+    if (categoria !== null) {
+      where = "WHERE id_categoria = ?";
+      params.push(categoria);
+    }
+
+    // 🔹 productos
+    const [productos] = await db.query(
+      `
+      SELECT *
+      FROM productos
+      ${where}
+      LIMIT ? OFFSET ?
+      `,
+      [...params, limite, offset]
+    );
+
+    // 🔹 total
+    const [totalResult] = await db.query(
+      `
       SELECT COUNT(*) AS total
       FROM productos
-      WHERE estado = "Disponible" AND id_vendedor != ?
-    `;
+      ${where}
+      `,
+      params
+    );
 
-    db.query(totalQuery, [id_vendedor], (err, totalResult) => {
-      if (err) return res.status(500).json({ error: err.sqlMessage });
-
-      const total = totalResult[0].total;
-
-      const dataQuery = `
-        SELECT id_producto, id_categoria, nombre, descripcion, precio, imagen_url, fecha_publicacion
-        FROM productos
-        WHERE estado = "Disponible" AND id_vendedor != ?
-        ORDER BY fecha_publicacion DESC
-        LIMIT ? OFFSET ?
-      `;
-
-      db.query(dataQuery, [id_vendedor, limit, offset], (err, results) => {
-        if (err) return res.status(500).json({ error: err.sqlMessage });
-
-        res.json({
-          productos: results,
-          total,
-          page,
-          limit,
-        });
-      });
+    res.json({
+      productos,
+      total: totalResult[0].total,
     });
   } catch (error) {
-    console.error("Token Error:", error);
-    res.status(403).json({ error: "Sesión inválida o expirada" });
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener productos" });
   }
 });
 
-// GET: Filtrar productos por categoría
-app.get("/productos/categoria/:categoria", async (req, res) => {
-  const authHeader = req.headers.authorization;
 
-  // 1. Verificación de seguridad
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "No autorizado" });
-  }
-
-  const token = authHeader.split("Bearer ")[1];
-
-  try {
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    const id_usuario_actual = decodedToken.uid; // Para excluir mis propios productos
-
-    // 2. Obtener la categoría de la URL (ej: /productos/categoria/Computadoras)
-    const categoria = req.params.categoria;
-
-    // 3. Paginación
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 12;
-    const offset = (page - 1) * limit;
-
-    // 4. Query para contar TOTAL de productos de ESA categoría (para la paginación)
-    const totalQuery = `
-      SELECT COUNT(*) AS total
-      FROM productos
-      WHERE estado = "Disponible" 
-      AND id_vendedor != ? 
-      AND id_categoria = ?
-    `;
-
-    db.query(totalQuery, [id_usuario_actual, categoria], (err, totalResult) => {
-      if (err) return res.status(500).json({ error: err.sqlMessage });
-
-      const total = totalResult[0].total;
-
-      // 5. Query para obtener los DATOS de esa categoría
-      // Agregué 'condicion' al SELECT para que sepa si es Nuevo/Usado
-      const dataQuery = `
-        SELECT id_producto, id_categoria, nombre, descripcion, precio, imagen_url, condicion, fecha_publicacion
-        FROM productos
-        WHERE estado = "Disponible" 
-        AND id_vendedor != ? 
-        AND id_categoria = ?
-        ORDER BY fecha_publicacion DESC
-        LIMIT ? OFFSET ?
-      `;
-
-      // Nota el orden de los parámetros: [id_usuario, categoria, limit, offset]
-      db.query(dataQuery, [id_usuario_actual, categoria, limit, offset], (err, results) => {
-        if (err) return res.status(500).json({ error: err.sqlMessage });
-
-        res.json({
-          productos: results,
-          total,
-          page,
-          limit,
-          categoria_filtrada: categoria
-        });
-      });
-    });
-
-  } catch (error) {
-    console.error("Token Error:", error);
-    res.status(403).json({ error: "Sesión inválida o expirada" });
-  }
-});
 
 //PUT
 // PUT: Actualizar producto
