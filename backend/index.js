@@ -221,7 +221,16 @@ app.get('/mis-productos', async (req, res) => {
 
         // Traemos todo lo que este usuario ha publicado
         const query = `
-            SELECT * FROM productos 
+            SELECT 
+                id_producto, 
+                nombre, 
+                descripcion, 
+                precio, 
+                imagen_url, 
+                estado,      
+                condicion,   
+                fecha_publicacion
+            FROM productos 
             WHERE id_vendedor = ? 
             ORDER BY fecha_publicacion DESC
         `;
