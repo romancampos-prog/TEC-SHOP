@@ -299,50 +299,83 @@ app.post('/productos', async (req, res) => {
 });
 
 //GET
-router.get("/productos", async (req, res) => {
+app.get("/productos", async (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  /* ===== 1. Seguridad ===== */
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "No autorizado" });
+  }
+
+  const token = authHeader.split("Bearer ")[1];
+
   try {
-    const pagina = parseInt(req.query.pagina) || 1;
-    const limite = parseInt(req.query.limite) || 12;
+    /* ===== 2. Verificar token Firebase ===== */
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    const id_vendedor = decodedToken.uid;
+
+    /* ===== 3. Parámetros ===== */
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
     const categoria = req.query.categoria ?? null;
+    const offset = (page - 1) * limit;
 
-    const offset = (pagina - 1) * limite;
-
-    let where = "";
-    let params = [];
+    /* ===== 4. WHERE dinámico ===== */
+    let where = `WHERE estado = "Disponible" AND id_vendedor != ?`;
+    let params = [id_vendedor];
 
     if (categoria !== null) {
-      where = "WHERE id_categoria = ?";
+      where += " AND id_categoria = ?";
       params.push(categoria);
     }
 
-    // 🔹 productos
-    const [productos] = await db.query(
-      `
-      SELECT *
+    /* ===== 5. Query productos ===== */
+    const queryProductos = `
+      SELECT 
+        id_producto,
+        id_categoria,
+        nombre,
+        descripcion,
+        precio,
+        imagen_url,
+        fecha_publicacion
       FROM productos
       ${where}
+      ORDER BY fecha_publicacion DESC
       LIMIT ? OFFSET ?
-      `,
-      [...params, limite, offset]
-    );
+    `;
 
-    // 🔹 total
-    const [totalResult] = await db.query(
-      `
+    /* ===== 6. Query total ===== */
+    const queryTotal = `
       SELECT COUNT(*) AS total
       FROM productos
       ${where}
-      `,
-      params
-    );
+    `;
 
-    res.json({
-      productos,
-      total: totalResult[0].total,
+    /* ===== 7. Ejecutar queries ===== */
+    db.query(queryProductos, [...params, limit, offset], (err, productos) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: err.sqlMessage });
+      }
+
+      db.query(queryTotal, params, (err2, totalResult) => {
+        if (err2) {
+          console.error(err2);
+          return res.status(500).json({ error: err2.sqlMessage });
+        }
+
+        res.json({
+          productos,
+          total: totalResult[0].total,
+          page,
+          limit,
+        });
+      });
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Error al obtener productos" });
+    console.error("Token Error:", error);
+    res.status(403).json({ error: "Sesión inválida o expirada" });
   }
 });
 
