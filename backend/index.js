@@ -255,6 +255,8 @@ app.post('/productos', async (req, res) => {
         // 3. Obtener datos del body
         const { id_categoria, nombre, descripcion, precio, imagen_url, estado} = req.body;
 
+        const condicionProducto = estado;
+
         // 4. Validación de campos obligatorios
         if (!id_categoria || !nombre || !precio || !descripcion) {
             return res.status(400).json({ error: "Faltan datos obligatorios del producto" });
@@ -262,7 +264,7 @@ app.post('/productos', async (req, res) => {
 
         const query = `
             INSERT INTO productos (id_vendedor, id_categoria, nombre, descripcion, precio, imagen_url, estado) 
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
 
         // 5. Insertar en MySQL
