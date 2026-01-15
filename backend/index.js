@@ -14,7 +14,7 @@ app.use(cors({
   origin: [
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://tec-shop-4b242.web.app"
+    "https://console.firebase.google.com/project/tec-shop-4b242/overview"
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -39,7 +39,7 @@ const server = http.createServer(app);
 // ================== SOCKET ==================
 const io = new Server(server, {
   cors: {
-    origin: "https://tec-shop-4b242.web.app",
+    origin: "https://console.firebase.google.com/project/tec-shop-4b242/overview",
     methods: ["GET", "POST"],
     credentials: true
   }
