@@ -48,7 +48,7 @@ router.get('/buscar', (req, res) => {
 // ------------------------------------------------------------------
 router.get('/feed', (req, res) => {
     // Si no envían parámetros, usamos valores por defecto (traer 10, empezar en 0)
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 12;
     const offset = parseInt(req.query.offset) || 0;
 
     const query = `
