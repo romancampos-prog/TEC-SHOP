@@ -341,25 +341,27 @@ app.put('/productos/:id', async (req, res) => {
     const token = authHeader.split('Bearer ')[1];
 
     try {
-        // 1. Extraer UID del token de Firebase
         const decodedToken = await admin.auth().verifyIdToken(token);
         const id_usuario_token = decodedToken.uid;
 
-        // 2. Extraer datos a actualizar del body
+        // 1. Recibimos los datos (incluyendo 'estado' que trae 'nuevo' o 'usado')
         const { id_categoria, nombre, descripcion, precio, imagen_url, estado } = req.body;
+        
+        // 2. Mapeamos 'estado' del front a 'condicion' de la BD
+        const condicion = estado; 
 
-        // 3. Ejecutar Update con doble validación en el WHERE
-        // Solo actualizará si el id_producto existe Y el id_vendedor coincide con el token
+        // 3. QUERY MODIFICADA:
+        // - Cambiamos 'estado = ?' por 'condicion = ?'
+        // - Así guardamos "Nuevo/Usado" en su columna correcta sin romper la disponibilidad
         const query = `
             UPDATE productos 
-            SET id_categoria = ?, nombre = ?, descripcion = ?, precio = ?, imagen_url = ?, estado = ?
+            SET id_categoria = ?, nombre = ?, descripcion = ?, precio = ?, imagen_url = ?, condicion = ?
             WHERE id_producto = ? AND id_vendedor = ?
         `;
 
-        db.query(query, [id_categoria, nombre, descripcion, precio, imagen_url, estado, id_producto, id_usuario_token], (err, result) => {
+        db.query(query, [id_categoria, nombre, descripcion, precio, imagen_url, condicion, id_producto, id_usuario_token], (err, result) => {
             if (err) return res.status(500).json({ error: err.sqlMessage });
 
-            // result.affectedRows será 0 si el producto no existe o si el usuario no es el dueño
             if (result.affectedRows === 0) {
                 return res.status(403).json({ error: "No tienes permiso para editar este producto o no existe." });
             }
@@ -372,7 +374,8 @@ app.put('/productos/:id', async (req, res) => {
     }
 });
 
-//DELETE
+// DELETE: Eliminar producto
+// (Este se queda igual, borrar borra todo sin importar la condición)
 app.delete('/productos/:id', async (req, res) => {
     const id_producto = req.params.id;
     const authHeader = req.headers.authorization;
@@ -387,7 +390,6 @@ app.delete('/productos/:id', async (req, res) => {
         const decodedToken = await admin.auth().verifyIdToken(token);
         const id_usuario_token = decodedToken.uid;
 
-        // Eliminar con validación de dueño
         const query = 'DELETE FROM productos WHERE id_producto = ? AND id_vendedor = ?';
 
         db.query(query, [id_producto, id_usuario_token], (err, result) => {
@@ -404,7 +406,6 @@ app.delete('/productos/:id', async (req, res) => {
         res.status(403).json({ error: "Token inválido" });
     }
 });
-
 
 // ✅ Arranque simple
 server.listen(3001, () => {
