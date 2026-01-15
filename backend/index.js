@@ -240,7 +240,6 @@ app.get('/mis-productos', async (req, res) => {
 app.post('/productos', async (req, res) => {
     const authHeader = req.headers.authorization;
 
-    // 1. Verificación de Seguridad
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: "No autorizado" });
     }
@@ -248,34 +247,40 @@ app.post('/productos', async (req, res) => {
     const token = authHeader.split('Bearer ')[1];
 
     try {
-        // 2. Extraer el UID del vendedor desde el Token de Firebase
         const decodedToken = await admin.auth().verifyIdToken(token);
         const id_vendedor = decodedToken.uid;
 
-        // 3. Obtener datos del body
-        const { id_categoria, nombre, descripcion, precio, imagen_url, estado} = req.body;
+        // 1. Recibimos los datos.
+        // OJO: El frontend te manda 'estado' con valor "nuevo" o "usado".
+        const { id_categoria, nombre, descripcion, precio, imagen_url, estado } = req.body;
 
+        // 2. Mapeamos los datos correctamente para la Base de Datos
+        const condicionReal = estado; // Aquí guardamos "nuevo" o "usado"
+        const estadoVenta = "Disponible"; // Forzamos que el producto nazca 'Disponible'
 
-        // 4. Validación de campos obligatorios
         if (!id_categoria || !nombre || !precio || !descripcion) {
             return res.status(400).json({ error: "Faltan datos obligatorios del producto" });
         }
 
+        // 3. Insertamos en las columnas correctas:
+        // 'condicion' recibe "nuevo/usado"
+        // 'estado' recibe "Disponible"
         const query = `
-            INSERT INTO productos (id_vendedor, id_categoria, nombre, descripcion, precio, imagen_url, estado) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO productos (id_vendedor, id_categoria, nombre, descripcion, precio, imagen_url, condicion, estado) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
-        // 5. Insertar en MySQL
-        db.query(query, [id_vendedor, id_categoria, nombre, descripcion, precio, imagen_url, estado], (err, result) => {
-            if (err) {
-                console.error("Error MySQL:", err.sqlMessage);
-                return res.status(500).json({ error: "Error al publicar", detalle: err.sqlMessage });
-            }
-            res.status(201).json({
-                message: "Producto publicado con éxito",
-                id_producto: result.insertId
-            });
+        db.query(query, 
+            [id_vendedor, id_categoria, nombre, descripcion, precio, imagen_url, condicionReal, estadoVenta], 
+            (err, result) => {
+                if (err) {
+                    console.error("Error MySQL:", err.sqlMessage);
+                    return res.status(500).json({ error: "Error al publicar", detalle: err.sqlMessage });
+                }
+                res.status(201).json({
+                    message: "Producto publicado con éxito",
+                    id_producto: result.insertId
+                });
         });
 
     } catch (error) {
