@@ -9,18 +9,33 @@ const admin = require("firebase-admin");
 // ================== APP ==================
 const app = express();
 
-// ================== CORS ==================
-app.use(cors({
+// ===== CORS PRE-FLIGHT FIX (OBLIGATORIO) =====
+app.options("*", cors({
   origin: [
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://tec-shop-4b242.web.app",
-    "https://tec-shop-production.up.railway.app"
+    "https://tec-shop-4b242.web.app"
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+
+
+// ================== CORS ==================
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://tec-shop-4b242.web.app"
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+
 
 
 app.use(express.json());
@@ -34,13 +49,13 @@ const io = new Server(server, {
     origin: [
       "http://localhost:5173",
       "http://localhost:3000",
-      "https://tec-shop-4b242.web.app",
-      "https://tec-shop-production.up.railway.app"
+      "https://tec-shop-4b242.web.app"
     ],
     methods: ["GET", "POST"],
     credentials: true
   }
 });
+
 
 
 // ================== FIREBASE ADMIN ==================
