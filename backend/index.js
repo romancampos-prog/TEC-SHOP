@@ -17,18 +17,17 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: (origin, callback) => {
-    // Permitir requests sin origin (Postman, health checks, SSR)
+  origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
+    } else {
+      return callback(new Error("CORS no permitido: " + origin));
     }
-
-    // ❗ No lanzar error para evitar bloqueo CORS del navegador
-    return callback(null, false);
   },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 app.use(express.json());
@@ -39,9 +38,10 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
-    credentials: true,
-  },
+    origin: "https://tec-shop-4b242.web.app",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
 });
 
 // ================== FIREBASE ADMIN (BASE64 SEGURO) ==================
