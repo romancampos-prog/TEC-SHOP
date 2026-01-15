@@ -346,8 +346,6 @@ router.get("/productos", async (req, res) => {
   }
 });
 
-
-
 //PUT
 // PUT: Actualizar producto
 app.put('/productos/:id', async (req, res) => {
