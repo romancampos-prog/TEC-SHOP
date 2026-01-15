@@ -300,33 +300,64 @@ app.post('/productos', async (req, res) => {
 
 //GET
 app.get('/productos', async (req, res) => {
-    const authHeader = req.headers.authorization;
+  const authHeader = req.headers.authorization;
 
-    // 1. Verificación de Seguridad
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: "No autorizado" });
-    }
+  // 1️⃣ Verificación de token
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      ok: false,
+      error: "No autorizado"
+    });
+  }
 
-    const token = authHeader.split('Bearer ')[1];
+  const token = authHeader.split('Bearer ')[1];
 
-    try {
-        // 2. Extraer el UID del vendedor desde el Token de Firebase
-        const decodedToken = await admin.auth().verifyIdToken(token);
-        const id_vendedor = decodedToken.uid;
+  try {
+    // 2️⃣ Validar token Firebase
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    const id_vendedor = decodedToken.uid;
 
-        // 3. inicializar el query
-        const query = 'SELECT id_producto, id_categoria, nombre, descripcion, precio, imagen_url, fecha_publicacion FROM productos WHERE estado = "Disponible" AND id_vendedor != ? ORDER BY fecha_publicacion DESC';
+    // 3️⃣ Query (solo productos disponibles y NO del mismo vendedor)
+    const query = `
+      SELECT 
+        id_producto,
+        id_categoria,
+        nombre,
+        descripcion,
+        precio,
+        imagen_url,
+        fecha_publicacion
+      FROM productos
+      WHERE estado = 'Disponible'
+        AND id_vendedor != ?
+      ORDER BY fecha_publicacion DESC
+    `;
 
-        // 5. Extraer en MySQL
-        db.query(query, [id_vendedor], (err, results) => {
-            if (err) return res.status(500).json({ error: err.sqlMessage });
-            res.json(results);
+    // 4️⃣ Ejecutar query
+    db.query(query, [id_vendedor], (err, results) => {
+      if (err) {
+        console.error("DB Error:", err);
+        return res.status(500).json({
+          ok: false,
+          error: err.sqlMessage
         });
+      }
 
-    } catch (error) {
-        console.error("Token Error:", error);
-        res.status(403).json({ error: "Sesión inválida o expirada" });
-    }
+      // 5️⃣ RESPUESTA FINAL (FORMA PROFESIONAL)
+      res.json({
+        ok: true,
+        total: results.length,
+        productos: results
+      });
+    });
+
+  } catch (error) {
+    console.error("Token Error:", error);
+    res.status(403).json({
+      ok: false,
+      error: "Sesión inválida o expirada"
+    });
+  }
 });
 
 //PUT
