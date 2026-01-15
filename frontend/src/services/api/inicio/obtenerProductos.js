@@ -8,7 +8,7 @@ export async function obtenerProductosBackend(
 ) {
   const token = await obtenerTokenFirebase();
 
-  let url = `https://tec-shop-production.up.railway.apps/productos?page=${page}&limit=${limit}`;
+  let url = `http://3.84.71.71:3001/productos?page=${page}&limit=${limit}`;
 
   // ===== filtro por categoría (texto) =====
   if (categoria !== null) {

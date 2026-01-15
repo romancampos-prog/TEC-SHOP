@@ -5,22 +5,7 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 const admin = require('firebase-admin');
-
-if (!admin.apps.length) {
-  const serviceAccount = JSON.parse(
-    Buffer.from(
-      process.env.FIREBASE_SERVICE_ACCOUNT_B64,
-      "base64"
-    ).toString("utf8")
-  );
-
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-}
-
-
-
+const serviceAccount = require('./serviceAccountKey.json');
 
 // --- CONFIGURACIÓN DE EXPRESS ---
 const app = express();
@@ -52,7 +37,10 @@ const io = new Server(server, {
     }
 });
 
-
+// --- INICIALIZAR FIREBASE ADMIN ---
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
 
 // --- CONEXIÓN A BASE DE DATOS ---
 const db = mysql.createConnection({
@@ -431,6 +419,6 @@ app.delete('/productos/:id', async (req, res) => {
 // --- ARRANQUE DEL SERVIDOR ---
 const PORT = process.env.PORT || 3001;
 
-server.listen(PORT, "0.0.0.0", () => {
+server.listen(PORT, () => {
   console.log(`✅ Servidor ejecutándose en puerto ${PORT}`);
 });

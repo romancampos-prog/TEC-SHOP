@@ -1,37 +1,55 @@
 .Contendor_cartas_productos {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 2rem;
-    padding: 5rem 10rem 0 10rem;
-    background-color: white;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: clamp(12px, 2vw, 32px);
+  padding: clamp(16px, 4vw, 80px) clamp(16px, 6vw, 160px) 24px;
+  background-color: #ffffff;
+
+  /* ✅ Evita que en pantallas enormes se vea “estirado” */
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
+/* =======================
+   PAGINACIÓN
+   ======================= */
 .paginacion {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 18px;
-  margin: 40px 0 20px;
-  padding: 12px 20px;
+  gap: 14px;
+  margin: 28px 0 22px;
+  padding: 12px 16px;
+
+  /* ✅ clave para móvil */
+  flex-wrap: wrap;
 }
 
 .btn-paginacion {
   background: #ffffff;
-  border: 1px solid #e0e0e0;
-  color: #1f2937; /* gris oscuro */
-  padding: 10px 18px;
-  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  color: #1f2937;
+  padding: 11px 18px;
+  border-radius: 14px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, background 0.25s ease, color 0.25s ease,
+    box-shadow 0.25s ease, border-color 0.25s ease;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
 }
 
 .btn-paginacion:hover:not(:disabled) {
-  background: #111827; /* casi negro */
+  background: #111827;
   color: #ffffff;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.15);
+  border-color: #111827;
+}
+
+.btn-paginacion:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
 }
 
 .btn-paginacion:disabled {
@@ -44,16 +62,62 @@
   font-size: 14px;
   color: #374151;
   background: #f9fafb;
-  padding: 8px 14px;
+  padding: 9px 14px;
   border-radius: 999px;
   border: 1px solid #e5e7eb;
+
+  /* ✅ evita que se parta feo */
+  white-space: nowrap;
 }
 
+/* =======================
+   RESPONSIVE (MEJORADO)
+   ======================= */
 
-@media (max-width: 870px) {
+/* Tablets / laptop chica */
+@media (max-width: 1024px) {
   .Contendor_cartas_productos {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.7rem;
-     padding: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    padding: 22px 22px 18px;
+  }
+}
+
+/* Celular grande */
+@media (max-width: 680px) {
+  .Contendor_cartas_productos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .paginacion {
+    gap: 10px;
+    padding: 10px 12px;
+    margin: 18px 0 18px;
+  }
+
+  .btn-paginacion {
+    padding: 10px 14px;
+    border-radius: 12px;
+  }
+}
+
+/* Celular chico: 1 columna y paginación cómoda */
+@media (max-width: 420px) {
+  .Contendor_cartas_productos {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .btn-paginacion {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .pagina-actual {
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
   }
 }

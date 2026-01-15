@@ -4,7 +4,7 @@ export async function eliminarProductoBack(idProducto) {
   const token = await obtenerTokenFirebase();
 
   const response = await fetch(
-    `https://tec-shop-production.up.railway.app/productos/${idProducto}`,
+    `http://3.84.71.71:3001/productos/${idProducto}`,
     {
       method: "DELETE",
       headers: {
