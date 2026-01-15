@@ -354,6 +354,75 @@ app.get("/productos", async (req, res) => {
   }
 });
 
+// GET: Filtrar productos por categoría
+app.get("/productos/categoria/:categoria", async (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  // 1. Verificación de seguridad
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "No autorizado" });
+  }
+
+  const token = authHeader.split("Bearer ")[1];
+
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    const id_usuario_actual = decodedToken.uid; // Para excluir mis propios productos
+
+    // 2. Obtener la categoría de la URL (ej: /productos/categoria/Computadoras)
+    const categoria = req.params.categoria;
+
+    // 3. Paginación
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const offset = (page - 1) * limit;
+
+    // 4. Query para contar TOTAL de productos de ESA categoría (para la paginación)
+    const totalQuery = `
+      SELECT COUNT(*) AS total
+      FROM productos
+      WHERE estado = "Disponible" 
+      AND id_vendedor != ? 
+      AND id_categoria = ?
+    `;
+
+    db.query(totalQuery, [id_usuario_actual, categoria], (err, totalResult) => {
+      if (err) return res.status(500).json({ error: err.sqlMessage });
+
+      const total = totalResult[0].total;
+
+      // 5. Query para obtener los DATOS de esa categoría
+      // Agregué 'condicion' al SELECT para que sepa si es Nuevo/Usado
+      const dataQuery = `
+        SELECT id_producto, id_categoria, nombre, descripcion, precio, imagen_url, condicion, fecha_publicacion
+        FROM productos
+        WHERE estado = "Disponible" 
+        AND id_vendedor != ? 
+        AND id_categoria = ?
+        ORDER BY fecha_publicacion DESC
+        LIMIT ? OFFSET ?
+      `;
+
+      // Nota el orden de los parámetros: [id_usuario, categoria, limit, offset]
+      db.query(dataQuery, [id_usuario_actual, categoria, limit, offset], (err, results) => {
+        if (err) return res.status(500).json({ error: err.sqlMessage });
+
+        res.json({
+          productos: results,
+          total,
+          page,
+          limit,
+          categoria_filtrada: categoria
+        });
+      });
+    });
+
+  } catch (error) {
+    console.error("Token Error:", error);
+    res.status(403).json({ error: "Sesión inválida o expirada" });
+  }
+});
+
 //PUT
 // PUT: Actualizar producto
 app.put('/productos/:id', async (req, res) => {
