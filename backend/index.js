@@ -1,4 +1,3 @@
-
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
@@ -44,13 +43,11 @@ admin.initializeApp({
 
 // --- CONEXIÓN A BASE DE DATOS ---
 const db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT || 3306
+    host: 'localhost',
+    user: 'resp',
+    password: 'resp_01_02',
+    database: 'campus_shop'
 });
-
 
 db.connect((err) => {
     if (err) console.error("❌ Error conectando a MySQL:", err);
@@ -417,8 +414,8 @@ app.delete('/productos/:id', async (req, res) => {
 });
 
 // --- ARRANQUE DEL SERVIDOR ---
-const PORT = process.env.PORT || 3001;
-
+const PORT = 3001;
 server.listen(PORT, () => {
-  console.log(`✅ Servidor ejecutándose en puerto ${PORT}`);
+    console.log(`✅ Servidor ejecutándose en puerto ${PORT}`);
+    console.log(`🚀 WebSockets listos para el Chat`);
 });
