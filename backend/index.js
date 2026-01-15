@@ -309,32 +309,70 @@ app.post('/productos', async (req, res) => {
 });
 
 app.get("/productos", async (req, res) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: "No autorizado" });
-    try {
-        const token = authHeader.split("Bearer ")[1];
-        const decodedToken = await admin.auth().verifyIdToken(token);
-        const id_vendedor_actual = decodedToken.uid;
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: "No autorizado" });
 
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 12;
-        const offset = (page - 1) * limit;
-        const busqueda = req.query.q ? `%${req.query.q}%` : null;
+  try {
+    const token = authHeader.split("Bearer ")[1];
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    const id_vendedor_actual = decodedToken.uid;
 
-        let where = 'WHERE estado = "Disponible" AND id_vendedor != ?';
-        let params = [id_vendedor_actual];
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const offset = (page - 1) * limit;
+    const busqueda = req.query.q ? `%${req.query.q}%` : null;
 
-        if (busqueda) {
-            where += " AND (nombre LIKE ? OR descripcion LIKE ?)";
-            params.push(busqueda, busqueda);
+    let where = 'WHERE estado = "Disponible" AND id_vendedor != ?';
+    let params = [id_vendedor_actual];
+
+    if (busqueda) {
+      where += " AND (nombre LIKE ? OR descripcion LIKE ?)";
+      params.push(busqueda, busqueda);
+    }
+
+    /* ========= 1️⃣ PRODUCTOS PAGINADOS ========= */
+    const queryProductos = `
+      SELECT *
+      FROM productos
+      ${where}
+      ORDER BY fecha_publicacion DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    /* ========= 2️⃣ TOTAL DE PRODUCTOS ========= */
+    const queryTotal = `
+      SELECT COUNT(*) AS total
+      FROM productos
+      ${where}
+    `;
+
+    db.query(queryTotal, params, (errTotal, totalResult) => {
+      if (errTotal) {
+        return res.status(500).json({ error: errTotal.sqlMessage });
+      }
+
+      const total = totalResult[0].total;
+
+      db.query(
+        queryProductos,
+        [...params, limit, offset],
+        (errProductos, productos) => {
+          if (errProductos) {
+            return res.status(500).json({ error: errProductos.sqlMessage });
+          }
+
+          res.json({
+            productos,
+            total,
+            page,
+            limit,
+          });
         }
-
-        const query = `SELECT * FROM productos ${where} ORDER BY fecha_publicacion DESC LIMIT ? OFFSET ?`;
-        db.query(query, [...params, limit, offset], (err, results) => {
-            if (err) return res.status(500).json({ error: err.sqlMessage });
-            res.json({ productos: results });
-        });
-    } catch (error) { res.status(403).json({ error: "Sesión expirada" }); }
+      );
+    });
+  } catch (error) {
+    res.status(403).json({ error: "Sesión expirada" });
+  }
 });
 
 app.put('/productos/:id', async (req, res) => {
