@@ -55,68 +55,6 @@ app.use('/chat', rutasChat);
 // --- ENDPOINTS DE CHAT (HISTORIAL) ---
 
 //APIs Chat
-app.post("/chat/crear-o-obtener", async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).send("No token");
-
-  try {
-    const token = authHeader.split("Bearer ")[1];
-    const decoded = await admin.auth().verifyIdToken(token);
-    const uidComprador = decoded.uid;
-
-    const { id_producto, id_vendedor } = req.body;
-
-    if (!id_producto || !id_vendedor) {
-      return res.status(400).json({ error: "Datos incompletos" });
-    }
-
-    // 1️⃣ Verificar si ya existe el chat
-    const buscarChat = `
-      SELECT * FROM chats
-      WHERE id_producto = ?
-        AND id_comprador = ?
-        AND id_vendedor = ?
-      LIMIT 1
-    `;
-
-    db.query(
-      buscarChat,
-      [id_producto, uidComprador, id_vendedor],
-      (err, rows) => {
-        if (err) return res.status(500).json(err);
-
-        // ✅ Chat ya existe
-        if (rows.length > 0) {
-          return res.json({
-            id_chat: rows[0].id_chat,
-            existente: true,
-          });
-        }
-
-        // 2️⃣ Crear nuevo chat
-        const crearChat = `
-          INSERT INTO chats (id_producto, id_comprador, id_vendedor)
-          VALUES (?, ?, ?)
-        `;
-
-        db.query(
-          crearChat,
-          [id_producto, uidComprador, id_vendedor],
-          (err2, result) => {
-            if (err2) return res.status(500).json(err2);
-
-            res.json({
-              id_chat: result.insertId,
-              existente: false,
-            });
-          }
-        );
-      }
-    );
-  } catch (e) {
-    res.status(403).send("Token inválido");
-  }
-});
 
 app.post("/chat/crear-o-obtener", async (req, res) => {
   const authHeader = req.headers.authorization;
