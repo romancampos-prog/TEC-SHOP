@@ -54,6 +54,140 @@ app.use('/chat', rutasChat);
 
 // --- ENDPOINTS DE CHAT (HISTORIAL) ---
 
+//APIs Chat
+app.post("/chat/crear-o-obtener", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).send("No token");
+
+  try {
+    const token = authHeader.split("Bearer ")[1];
+    const decoded = await admin.auth().verifyIdToken(token);
+    const uidComprador = decoded.uid;
+
+    const { id_producto, id_vendedor } = req.body;
+
+    if (!id_producto || !id_vendedor) {
+      return res.status(400).json({ error: "Datos incompletos" });
+    }
+
+    // 1️⃣ Verificar si ya existe el chat
+    const buscarChat = `
+      SELECT * FROM chats
+      WHERE id_producto = ?
+        AND id_comprador = ?
+        AND id_vendedor = ?
+      LIMIT 1
+    `;
+
+    db.query(
+      buscarChat,
+      [id_producto, uidComprador, id_vendedor],
+      (err, rows) => {
+        if (err) return res.status(500).json(err);
+
+        // ✅ Chat ya existe
+        if (rows.length > 0) {
+          return res.json({
+            id_chat: rows[0].id_chat,
+            existente: true,
+          });
+        }
+
+        // 2️⃣ Crear nuevo chat
+        const crearChat = `
+          INSERT INTO chats (id_producto, id_comprador, id_vendedor)
+          VALUES (?, ?, ?)
+        `;
+
+        db.query(
+          crearChat,
+          [id_producto, uidComprador, id_vendedor],
+          (err2, result) => {
+            if (err2) return res.status(500).json(err2);
+
+            res.json({
+              id_chat: result.insertId,
+              existente: false,
+            });
+          }
+        );
+      }
+    );
+  } catch (e) {
+    res.status(403).send("Token inválido");
+  }
+});
+
+app.post("/chat/crear-o-obtener", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).send("No token");
+
+  try {
+    const token = authHeader.split("Bearer ")[1];
+    const decoded = await admin.auth().verifyIdToken(token);
+    const id_comprador = decoded.uid;
+
+    const { id_producto } = req.body;
+    if (!id_producto) return res.status(400).send("Falta id_producto");
+
+    // 1. Obtener vendedor del producto
+    const qProducto = `
+      SELECT id_vendedor 
+      FROM productos 
+      WHERE id_producto = ?
+    `;
+
+    db.query(qProducto, [id_producto], (err, prod) => {
+      if (err) return res.status(500).json(err);
+      if (prod.length === 0) return res.status(404).send("Producto no existe");
+
+      const id_vendedor = prod[0].id_vendedor;
+
+      // 2. Buscar chat existente
+      const qChat = `
+        SELECT id_chat 
+        FROM chats
+        WHERE id_producto = ?
+        AND id_comprador = ?
+        AND id_vendedor = ?
+        LIMIT 1
+      `;
+
+      db.query(
+        qChat,
+        [id_producto, id_comprador, id_vendedor],
+        (err, chat) => {
+          if (err) return res.status(500).json(err);
+
+          // 3. Si existe, regresar
+          if (chat.length > 0) {
+            return res.json({ id_chat: chat[0].id_chat });
+          }
+
+          // 4. Crear chat
+          const qCrear = `
+            INSERT INTO chats (id_comprador, id_vendedor, id_producto)
+            VALUES (?, ?, ?)
+          `;
+
+          db.query(
+            qCrear,
+            [id_comprador, id_vendedor, id_producto],
+            (err, result) => {
+              if (err) return res.status(500).json(err);
+
+              res.json({ id_chat: result.insertId });
+            }
+          );
+        }
+      );
+    });
+  } catch (e) {
+    res.status(403).send("Token inválido");
+  }
+});
+
+
 // 1. Obtener lista de conversaciones
 app.get('/chat/conversaciones', async (req, res) => {
     const authHeader = req.headers.authorization;
@@ -89,6 +223,46 @@ app.get('/chat/mensajes/:idChat', async (req, res) => {
 });
 
 // --- LÓGICA DE SOCKETS (TIEMPO REAL) ---
+// io.on('connection', (socket) => {
+//     console.log('🟢 Usuario conectado al Socket:', socket.id);
+
+//     // Unirse a una sala específica
+//     socket.on('join_chat', (id_chat) => {
+//         socket.join(id_chat);
+//         console.log(`📥 Usuario ${socket.id} unido al chat: ${id_chat}`);
+//     });
+
+//     // Salir de una sala
+//     socket.on('leave_chat', (id_chat) => {
+//         socket.leave(id_chat);
+//         console.log(`📤 Usuario ${socket.id} salió del chat: ${id_chat}`);
+//     });
+
+//     // Enviar y recibir mensajes
+//     socket.on('send_message', (data) => {
+//         const { id_chat, id_emisor, contenido } = data;
+//         const query = 'INSERT INTO mensajes (id_chat, id_emisor, contenido) VALUES (?, ?, ?)';
+        
+//         db.query(query, [id_chat, id_emisor, contenido], (err, result) => {
+//             if (err) return console.error("❌ Error al guardar mensaje:", err);
+
+//             // Notificar a todos en la sala el nuevo mensaje
+//             io.to(id_chat).emit('receive_message', {
+//                 id_mensaje: result.insertId,
+//                 id_chat,
+//                 id_emisor,
+//                 contenido,
+//                 fecha_envio: new Date()
+//             });
+//         });
+//     });
+
+//     socket.on('disconnect', () => {
+//         console.log('🔴 Usuario desconectado del Socket');
+//     });
+// });
+
+
 io.on('connection', (socket) => {
     console.log('🟢 Usuario conectado al Socket:', socket.id);
 
@@ -127,6 +301,7 @@ io.on('connection', (socket) => {
         console.log('🔴 Usuario desconectado del Socket');
     });
 });
+
 
 // --- ENDPOINTS DE USUARIOS ---
 
