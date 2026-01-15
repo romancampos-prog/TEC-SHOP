@@ -317,19 +317,37 @@ app.get("/productos", async (req, res) => {
     /* ===== 3. Parámetros ===== */
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12;
-    const categoria = req.query.categoria ?? null;
+    const categoria = req.query.categoria ?? null; // STRING
+    const busqueda = req.query.q ?? "";             // TEXTO
     const offset = (page - 1) * limit;
 
     /* ===== 4. WHERE dinámico ===== */
     let where = `WHERE estado = "Disponible" AND id_vendedor != ?`;
     let params = [id_vendedor];
 
+    /* ===== 5. Filtro por categoría ===== */
     if (categoria !== null) {
       where += " AND id_categoria = ?";
       params.push(categoria);
     }
 
-    /* ===== 5. Query productos ===== */
+    /* ===== 6. Búsqueda por texto (case-insensitive) ===== */
+    if (busqueda) {
+      where += `
+        AND (
+          LOWER(nombre) LIKE LOWER(?)
+          OR LOWER(descripcion) LIKE LOWER(?)
+          OR LOWER(id_categoria) LIKE LOWER(?)
+        )
+      `;
+      params.push(
+        `%${busqueda}%`,
+        `%${busqueda}%`,
+        `%${busqueda}%`
+      );
+    }
+
+    /* ===== 7. Query productos ===== */
     const queryProductos = `
       SELECT 
         id_producto,
@@ -345,14 +363,14 @@ app.get("/productos", async (req, res) => {
       LIMIT ? OFFSET ?
     `;
 
-    /* ===== 6. Query total ===== */
+    /* ===== 8. Query total ===== */
     const queryTotal = `
       SELECT COUNT(*) AS total
       FROM productos
       ${where}
     `;
 
-    /* ===== 7. Ejecutar queries ===== */
+    /* ===== 9. Ejecutar queries ===== */
     db.query(queryProductos, [...params, limit, offset], (err, productos) => {
       if (err) {
         console.error(err);
