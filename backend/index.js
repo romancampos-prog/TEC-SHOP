@@ -6,16 +6,20 @@ const http = require('http');
 const { Server } = require('socket.io');
 const admin = require('firebase-admin');
 
-const serviceAccount = JSON.parse(
-  Buffer.from(
-    process.env.FIREBASE_SERVICE_ACCOUNT_B64,
-    "base64"
-  ).toString("utf8")
-);
+if (!admin.apps.length) {
+  const serviceAccount = JSON.parse(
+    Buffer.from(
+      process.env.FIREBASE_SERVICE_ACCOUNT_B64,
+      "base64"
+    ).toString("utf8")
+  );
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+}
+
+
 
 
 // --- CONFIGURACIÓN DE EXPRESS ---
@@ -48,10 +52,7 @@ const io = new Server(server, {
     }
 });
 
-// --- INICIALIZAR FIREBASE ADMIN ---
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-});
+
 
 // --- CONEXIÓN A BASE DE DATOS ---
 const db = mysql.createConnection({
