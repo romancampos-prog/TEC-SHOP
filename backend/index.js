@@ -255,7 +255,6 @@ app.post('/productos', async (req, res) => {
         // 3. Obtener datos del body
         const { id_categoria, nombre, descripcion, precio, imagen_url, estado} = req.body;
 
-        const condicionProducto = estado;
 
         // 4. Validación de campos obligatorios
         if (!id_categoria || !nombre || !precio || !descripcion) {
