@@ -9,23 +9,30 @@ const admin = require("firebase-admin");
 // ================== APP ==================
 const app = express();
 
-// ================== CORS (PRODUCCIÓN REAL) ==================
+// ================== CORS (PRODUCCIÓN ESTABLE) ==================
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://tec-shop-4b242.web.app",
+];
+
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "https://console.firebase.google.com/project/tec-shop-4b242/overview"
-  ],
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error("CORS no permitido: " + origin));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// ================== BODY ==================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ================== PRE-FLIGHT (CLAVE) ==================
 app.use((req, res, next) => {
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
@@ -33,21 +40,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// ================== SERVER ==================
+// ================== SERVER + SOCKET ==================
 const server = http.createServer(app);
 
-// ================== SOCKET ==================
 const io = new Server(server, {
   cors: {
-    origin: "https://console.firebase.google.com/project/tec-shop-4b242/overview",
+    origin: "https://tec-shop-4b242.web.app",
     methods: ["GET", "POST"],
     credentials: true
   }
 });
 
-// ================== FIREBASE ADMIN ==================
+// ================== FIREBASE ADMIN (BASE64 SEGURO) ==================
 if (!process.env.FIREBASE_SERVICE_ACCOUNT_B64) {
-  console.error("❌ FIREBASE_SERVICE_ACCOUNT_B64 no definida");
+  console.error("❌ FIREBASE_SERVICE_ACCOUNT_B64 no está definida en Railway");
   process.exit(1);
 }
 
@@ -59,15 +65,16 @@ try {
       "base64"
     ).toString("utf8")
   );
-  console.log("✅ Firebase Admin cargado");
-} catch (e) {
-  console.error("❌ Error Firebase Admin:", e.message);
+} catch (err) {
+  console.error("❌ Error parseando FIREBASE_SERVICE_ACCOUNT_B64:", err.message);
   process.exit(1);
 }
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
+
+console.log("✅ Firebase Admin inicializado");
 
 // ================== MYSQL ==================
 const db = mysql.createConnection({
@@ -90,16 +97,25 @@ db.connect((err) => {
 io.on("connection", (socket) => {
   console.log("🟢 Socket conectado:", socket.id);
 
-  socket.on("join_chat", (id_chat) => socket.join(id_chat));
-  socket.on("leave_chat", (id_chat) => socket.leave(id_chat));
+  socket.on("join_chat", (id_chat) => {
+    socket.join(id_chat);
+  });
+
+  socket.on("leave_chat", (id_chat) => {
+    socket.leave(id_chat);
+  });
 
   socket.on("send_message", (data) => {
     const { id_chat, id_emisor, contenido } = data;
+
     const q =
-      "INSERT INTO mensajes (id_chat,id_emisor,contenido) VALUES (?,?,?)";
+      "INSERT INTO mensajes (id_chat, id_emisor, contenido) VALUES (?, ?, ?)";
 
     db.query(q, [id_chat, id_emisor, contenido], (err, result) => {
-      if (err) return console.error(err);
+      if (err) {
+        console.error("❌ Error mensaje:", err);
+        return;
+      }
 
       io.to(id_chat).emit("receive_message", {
         id_mensaje: result.insertId,
@@ -110,9 +126,13 @@ io.on("connection", (socket) => {
       });
     });
   });
+
+  socket.on("disconnect", () => {
+    console.log("🔴 Socket desconectado");
+  });
 });
 
-// ================== AUTH ==================
+// ================== MIDDLEWARE AUTH ==================
 async function verificarToken(req, res, next) {
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ error: "No token" });
@@ -126,53 +146,6 @@ async function verificarToken(req, res, next) {
     res.status(403).json({ error: "Token inválido" });
   }
 }
-
-// ================== USUARIOS ==================
-app.post("/usuarios", verificarToken, (req, res) => {
-  const { usuario, correo } = req.body;
-  const q =
-    "INSERT INTO usuarios (id_usuario,nombre_completo,correo_institucional) VALUES (?,?,?)";
-
-  db.query(q, [req.uid, usuario, correo], () =>
-    res.json({ ok: true })
-  );
-});
-
-app.get("/usuarios", verificarToken, (req, res) => {
-  const q = "SELECT nombre_completo FROM usuarios WHERE id_usuario=?";
-  db.query(q, [req.uid], (err, r) =>
-    res.json({ nombre: r[0]?.nombre_completo })
-  );
-});
-
-// ================== PRODUCTOS ==================
-app.get("/productos", verificarToken, (req, res) => {
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 12;
-  const offset = (page - 1) * limit;
-  const busqueda = req.query.q ? `%${req.query.q}%` : null;
-
-  let where = `WHERE estado="Disponible" AND id_vendedor != ?`;
-  let params = [req.uid];
-
-  if (busqueda) {
-    where += " AND (nombre LIKE ? OR descripcion LIKE ?)";
-    params.push(busqueda, busqueda);
-  }
-
-  const qTotal = `SELECT COUNT(*) total FROM productos ${where}`;
-  const qProd = `
-    SELECT * FROM productos ${where}
-    ORDER BY fecha_publicacion DESC
-    LIMIT ? OFFSET ?
-  `;
-
-  db.query(qTotal, params, (e, t) => {
-    db.query(qProd, [...params, limit, offset], (e, p) =>
-      res.json({ productos: p, total: t[0].total })
-    );
-  });
-});
 
 // ================== CHAT ==================
 app.post("/chat/crear-o-obtener", verificarToken, (req, res) => {
@@ -222,7 +195,55 @@ app.get("/chat/mensajes/:idChat", verificarToken, (req, res) => {
   db.query(q, [req.params.idChat], (err, rows) => res.json(rows));
 });
 
-// ================== START ==================
+// ================== USUARIOS ==================
+app.post("/usuarios", verificarToken, (req, res) => {
+  const { usuario, correo } = req.body;
+
+  const q =
+    "INSERT INTO usuarios (id_usuario,nombre_completo,correo_institucional) VALUES (?,?,?)";
+
+  db.query(q, [req.uid, usuario, correo], () =>
+    res.json({ ok: true })
+  );
+});
+
+app.get("/usuarios", verificarToken, (req, res) => {
+  const q = "SELECT nombre_completo FROM usuarios WHERE id_usuario=?";
+  db.query(q, [req.uid], (err, r) =>
+    res.json({ nombre: r[0]?.nombre_completo })
+  );
+});
+
+// ================== PRODUCTOS ==================
+app.get("/productos", verificarToken, (req, res) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 12;
+  const offset = (page - 1) * limit;
+  const busqueda = req.query.q ? `%${req.query.q}%` : null;
+
+  let where = `WHERE estado="Disponible" AND id_vendedor != ?`;
+  let params = [req.uid];
+
+  if (busqueda) {
+    where += " AND (nombre LIKE ? OR descripcion LIKE ?)";
+    params.push(busqueda, busqueda);
+  }
+
+  const qTotal = `SELECT COUNT(*) total FROM productos ${where}`;
+  const qProd = `
+    SELECT * FROM productos ${where}
+    ORDER BY fecha_publicacion DESC
+    LIMIT ? OFFSET ?
+  `;
+
+  db.query(qTotal, params, (e, t) => {
+    db.query(qProd, [...params, limit, offset], (e, p) =>
+      res.json({ productos: p, total: t[0].total })
+    );
+  });
+});
+
+// ================== SERVER START ==================
 const PORT = process.env.PORT || 3001;
 
 server.listen(PORT, () => {
