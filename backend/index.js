@@ -222,12 +222,12 @@ app.get('/mis-productos', async (req, res) => {
         // Traemos todo lo que este usuario ha publicado
         const query = `
             SELECT 
-                id_producto, 
-                nombre, 
+                id_producto,
+                id_categoria,
+                nombre,
                 descripcion, 
                 precio, 
-                imagen_url, 
-                estado,      
+                imagen_url,     
                 condicion,   
                 fecha_publicacion
             FROM productos 
