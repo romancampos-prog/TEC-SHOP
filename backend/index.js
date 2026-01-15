@@ -9,7 +9,7 @@ const admin = require("firebase-admin");
 // ================== APP ==================
 const app = express();
 
-// ================== CORS ==================
+// ================== CORS (PRODUCCIÓN ESTABLE) ==================
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
@@ -18,16 +18,17 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // permite requests sin origin (Postman, backend-to-backend)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
+    // permitir requests sin origin (Postman, SSR, health checks)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
+
+    // ❗ NO lanzar error → evita CORS bloqueado en navegador
+    return callback(null, false);
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
 app.use(express.json());
@@ -39,22 +40,28 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
-    methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
 // ================== FIREBASE ADMIN ==================
 try {
+  // 👉 si usas Base64 (RECOMENDADO)
+  const serviceAccount = JSON.parse(
+    Buffer.from(
+      process.env.FIREBASE_SERVICE_ACCOUNT_B64,
+      "base64"
+    ).toString("utf8")
+  );
+
   admin.initializeApp({
-    credential: admin.credential.cert(
-      JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-    ),
+    credential: admin.credential.cert(serviceAccount),
   });
+
   console.log("✅ Firebase Admin inicializado");
 } catch (error) {
   console.error("❌ Error Firebase Admin:", error.message);
-  process.exit(1); // evita crash-loop en Railway
+  process.exit(1);
 }
 
 // ================== MYSQL ==================
