@@ -312,27 +312,45 @@ app.get("/productos", async (req, res) => {
     const decodedToken = await admin.auth().verifyIdToken(token);
     const id_vendedor = decodedToken.uid;
 
-    // 👇 PAGINACIÓN
-    const page = Number(req.query.page) || 1;
-    const limit = 12;
+    // paginación
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
     const offset = (page - 1) * limit;
 
-    const query = `
-      SELECT id_producto, id_categoria, nombre, descripcion, precio, imagen_url, fecha_publicacion
+    // total de productos
+    const totalQuery = `
+      SELECT COUNT(*) AS total
       FROM productos
-      WHERE estado = 'Disponible'
-        AND id_vendedor != ?
-      ORDER BY fecha_publicacion DESC
-      LIMIT ? OFFSET ?
+      WHERE estado = "Disponible" AND id_vendedor != ?
     `;
 
-    db.query(query, [id_vendedor, limit, offset], (err, results) => {
+    db.query(totalQuery, [id_vendedor], (err, totalResult) => {
       if (err) return res.status(500).json({ error: err.sqlMessage });
-      res.json(results);
-    });
 
+      const total = totalResult[0].total;
+
+      const dataQuery = `
+        SELECT id_producto, id_categoria, nombre, descripcion, precio, imagen_url, fecha_publicacion
+        FROM productos
+        WHERE estado = "Disponible" AND id_vendedor != ?
+        ORDER BY fecha_publicacion DESC
+        LIMIT ? OFFSET ?
+      `;
+
+      db.query(dataQuery, [id_vendedor, limit, offset], (err, results) => {
+        if (err) return res.status(500).json({ error: err.sqlMessage });
+
+        res.json({
+          productos: results,
+          total,
+          page,
+          limit,
+        });
+      });
+    });
   } catch (error) {
-    res.status(403).json({ error: "Sesión inválida" });
+    console.error("Token Error:", error);
+    res.status(403).json({ error: "Sesión inválida o expirada" });
   }
 });
 
