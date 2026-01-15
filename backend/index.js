@@ -18,14 +18,14 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // permitir requests sin origin (Postman, SSR, health checks)
+    // Permitir requests sin origin (Postman, health checks, SSR)
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
-    // ❗ NO lanzar error → evita CORS bloqueado en navegador
+    // ❗ No lanzar error para evitar bloqueo CORS del navegador
     return callback(null, false);
   },
   credentials: true,
@@ -44,25 +44,30 @@ const io = new Server(server, {
   },
 });
 
-// ================== FIREBASE ADMIN ==================
+// ================== FIREBASE ADMIN (BASE64 SEGURO) ==================
+if (!process.env.FIREBASE_SERVICE_ACCOUNT_B64) {
+  console.error("❌ FIREBASE_SERVICE_ACCOUNT_B64 no está definida en Railway");
+  process.exit(1);
+}
+
+let serviceAccount;
 try {
-  // 👉 si usas Base64 (RECOMENDADO)
-  const serviceAccount = JSON.parse(
+  serviceAccount = JSON.parse(
     Buffer.from(
       process.env.FIREBASE_SERVICE_ACCOUNT_B64,
       "base64"
     ).toString("utf8")
   );
-
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-
-  console.log("✅ Firebase Admin inicializado");
-} catch (error) {
-  console.error("❌ Error Firebase Admin:", error.message);
+} catch (err) {
+  console.error("❌ Error parseando FIREBASE_SERVICE_ACCOUNT_B64:", err.message);
   process.exit(1);
 }
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+console.log("✅ Firebase Admin inicializado");
 
 // ================== MYSQL ==================
 const db = mysql.createConnection({
